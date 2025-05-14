@@ -78,7 +78,9 @@ void SSMappingTable::insert(const std::string& filename, uint64_t lbn) {
     auto it = mappingTable.find(filename);
     if (it != mappingTable.end()) {
         std::cout << "[INFO] File " << filename << " already exists. Overwriting lbn.\n";
+        
         it->second = lbn;
+        
     } else {
         mappingTable[filename] = lbn;
         std::cout << "[INFO] Inserted file " << filename << " with lbn " << lbn << ".\n";

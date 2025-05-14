@@ -10,10 +10,32 @@
 #define PAGE_NUM 128
 #define PAGE_SIZE 16384
 
+#define LOG2_CEIL(x) ( \
+    ((x) <= 1) ? 0 : \
+    ((x) <= 2) ? 1 : \
+    ((x) <= 4) ? 2 : \
+    ((x) <= 8) ? 3 : \
+    ((x) <= 16) ? 4 : \
+    ((x) <= 32) ? 5 : \
+    ((x) <= 64) ? 6 : \
+    ((x) <= 128) ? 7 : \
+    ((x) <= 256) ? 8 : \
+    ((x) <= 512) ? 9 : \
+    ((x) <= 1024) ? 10 : -1)
+
+#define CHANNEL_BITS LOG2_CEIL(CHANNEL_NUM)
+#define PACKAGE_BITS LOG2_CEIL(PACKAGE_NUM)
+#define DIE_BITS     LOG2_CEIL(DIE_NUM)
+#define PLANE_BITS   LOG2_CEIL(PLANE_NUM)
+#define BLOCK_BITS LOG2_CEIL(BLOCK_NUM)
+
 #define MAPPINGLBN 1
 
 #define LBN_NUM ( CHANNEL_NUM * PACKAGE_NUM * DIE_NUM * PLANE_NUM * BLOCK_NUM )
 #define LBN_SIZE ( PAGE_SIZE * PAGE_NUM )
+
+#define LBN2CH(LBA) ( (LBA >> (CHANNEL_BITS + PACKAGE_BITS + DIE_BITS + PLANE_BITS + PLANE_BITS)) % CHANNEL_NUM ) 
+
 
 #define INVALIDLBN 0xFFFFFFFFFFFFFFFF
 #include <cstdint>

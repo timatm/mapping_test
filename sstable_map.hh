@@ -4,12 +4,15 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <array>
 #include <cstdint>
 #include <vector>
-#include <disk.hh>
 #include <iostream>
 #include <iomanip>
 
+
+#include "disk.hh"
+#include "def.hh"
 class SSMappingTable {
 public:
     void init_mapping_table();
@@ -30,7 +33,8 @@ public:
 private:
     std::unordered_map<std::string, uint64_t> mappingTable;
     std::unordered_set<uint64_t> usedLBNList;
-    std::vector<uint64_t> freeLBNList;
+    std::array<std::vector<uint64_t>, CHANNEL_NUM> freeLBNList;
+
 
     Disk disk;
     
