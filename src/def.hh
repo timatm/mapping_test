@@ -67,12 +67,12 @@ struct mappingTablePerPage {
         struct {
             uint8_t nextPage;       // 1 byte
             uint8_t entry_num;     // 1 bytes
-            uint8_t reserved[62];   // 61 bytes
+            uint8_t reserved1[62];   // 61 bytes
         };
     };
     
     mappingEntry entry[MAPPING_TABLE_ENTRIES]; 
-    uint8_t reserved[16384 - (MAPPING_TABLE_ENTRIES * sizeof(mappingEntry)) - sizeof(header)]; // 填滿16KB
+    uint8_t reserved2[PAGE_SIZE - (MAPPING_TABLE_ENTRIES * sizeof(mappingEntry)) - sizeof(header)]; // 填滿16KB
 
     mappingTablePerPage() {
         memset(this, 0xFF, sizeof(mappingTablePerPage));

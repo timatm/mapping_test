@@ -1,3 +1,2 @@
 nvme.img
-*.o
-main
+/build

@@ -25,4 +25,12 @@ endif
 	truncate -s $(SIZE) $(FILE)
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -rf build
+
+build:
+	cmake -S . -B build
+	cmake --build build -- -j$(nproc)
+
+
+# clean:
+# 	rm -f $(OBJ) $(TARGET)

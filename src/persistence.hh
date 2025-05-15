@@ -8,7 +8,6 @@
 #include <array>
 #include "def.hh"
 #include "disk.hh"
-#include "mapping_table.hh"
 class persistence {
 
 public:

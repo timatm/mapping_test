@@ -17,13 +17,13 @@ public:
     std::array<std::vector<uint64_t>, CHANNEL_NUM> freeLBNList;
     void insert_freeLBNList(uint64_t lbn);
     bool remove_freeLBNList(uint64_t lbn);
-    void get_freeLBNList(uint64_t lbn);
+    bool get_freeLBNList(uint64_t lbn);
 
     void insert_usedLBNList(uint64_t lbn);
     bool remove_usedLBNList(uint64_t lbn);
-    void get_usedLBNList(uint64_t lbn);
+    bool get_usedLBNList(uint64_t lbn);
 
-    void LBNPool::print();
+    void print();
 };
 
 

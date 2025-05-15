@@ -3,7 +3,7 @@
 
 void mapping::init_mapping_table(){
     uint64_t mappingPageLBN = MAPPINGLBN;
-    mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager->readMappingTable(mappingPageLBN);
+    mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN);
     
     while(mappingTablePtr->nextPage != 0) {
         for (int i = 0; i < mappingTablePtr->entry_num; i++) {
@@ -15,7 +15,7 @@ void mapping::init_mapping_table(){
             }
         }
         mappingPageLBN++;
-        mappingTablePtr = (mappingTablePerPage *)persistenceManager->readMappingTable(mappingPageLBN);
+        mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN);
     }
 
 

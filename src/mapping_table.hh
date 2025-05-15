@@ -10,6 +10,7 @@
 #include <iostream>
 #include "def.hh"
 #include "lbn_pool.hh"
+#include "persistence.hh"
 class mapping{
 public:
     LBNPool lbnPoolManager; 
