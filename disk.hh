@@ -17,8 +17,6 @@ public:
     int removeSStable(uint64_t lbn);
 private:
     FILE* file = nullptr;
-    uint64_t pageSize = PAGE_SIZE; // Default block size
-    uint64_t blockSize = PAGE_SIZE * PAGE_NUM;
     uint64_t LBN2LPN(uint64_t lbn);
 };
 #endif // __DISK_H__

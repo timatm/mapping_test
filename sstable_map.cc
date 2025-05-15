@@ -11,7 +11,7 @@ void SSMappingTable::init_mapping_table(){
 
     for (uint64_t lbn = 0; lbn < LBN_NUM; lbn++) {
         if (usedLBNList.find(lbn) == usedLBNList.end()) {
-            freeLBNList.push_back(lbn);
+            freeLBNList[LBN2CH(lbn)].push_back(lbn);
         }
     }
 }
@@ -71,17 +71,19 @@ void SSMappingTable::flushMappingTable() {
 }
 
 void SSMappingTable::insert(const std::string& filename, uint64_t lbn) {
-    if (lbn >= totalBlocks) {
+    if (lbn >= LBN_NUM) {
         std::cerr << "[ERROR] insert_mapping_entry: lbn out of range. lbn=" << lbn << "\n";
         return;
     }
     auto it = mappingTable.find(filename);
     if (it != mappingTable.end()) {
         std::cout << "[INFO] File " << filename << " already exists. Overwriting lbn.\n";
-        
+        usedLBNList.erase(it->second);
+        freeLBNList[LBN2CH(lbn)].push_back(lbn);
         it->second = lbn;
         
-    } else {
+    }
+    else {
         mappingTable[filename] = lbn;
         std::cout << "[INFO] Inserted file " << filename << " with lbn " << lbn << ".\n";
     }    
