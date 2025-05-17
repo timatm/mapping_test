@@ -29,6 +29,26 @@ void mapping::init_mapping_table(){
         }
     }
 }
+
+void mapping::insert(const std::string& filename, uint64_t lbn) {
+    if (mappingTable.find(filename) != mappingTable.end()) {
+        std::cerr << "File already exists in the mapping table , update mapping to " << lbn << "\n";
+    }
+
+    lbnPoolManager.remove_freeLBNList(mappingTable[filename]);
+    mappingTable[filename] = lbn;
+    lbnPoolManager.insert_usedLBNList(lbn);
+    return;
+}
+
+uint64_t mapping::getLBN(const std::string& filename){
+    return mappingTable[filename];
+}
+
+void mapping::remove(const std::string& filename){
+    
+}
+
 void mapping::print_mapping(mappingTablePerPage *page) {
     std::cout << "===== Mapping Table Page =====\n";
     size_t count = 0;

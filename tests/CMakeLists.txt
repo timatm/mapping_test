@@ -9,7 +9,6 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# ▶︎ 1. 自動追蹤檔案變動
 message(STATUS "Current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
 file(GLOB TEST_SRC *.cc)
 message(STATUS "TEST_SRC = ${TEST_SRC}")
@@ -24,11 +23,5 @@ else()
 
   include(GoogleTest)
   # add_test(NAME test_lbnPool COMMAND runTests)
-  gtest_discover_tests(runTests           # 目標名
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}  # 執行目錄
-    DISCOVERY_TIMEOUT  30                 # 秒；預設 5
-    TEST_PREFIX      "Unit."              # 自訂前綴，可省略
-    TEST_SUFFIX      ""                   # 亦可自訂後綴
-    EXTRA_ARGS       --myflag=1           # 需要額外參數時
-  )
+  add_test(NAME AllTests COMMAND runTests)
 endif()
