@@ -84,6 +84,6 @@ TEST(LBN_policy, RR_policy_adaptive) {
         cur = (cur + 1) % CHANNEL_NUM;
     }
 
-    // Check if all LBNs are used
+    // Check all LBNs are used
     EXPECT_EQ(pool.RRpolicy(), INVALIDLBN);
 }
