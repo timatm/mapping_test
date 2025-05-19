@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 #include "../src/lbn_pool.hh"
 
-TEST(LBNPool, InsertAndGet) {
+TEST(LBN_pool, InsertAndGet) {
     LBNPool mapMgr;
     mapMgr.insert_usedLBNList(0);
     EXPECT_TRUE(mapMgr.get_usedLBNList(0));
 }
 
-TEST(LBNPool, InsertAndGetMultiple) {
+TEST(LBN_pool, InsertAndGetMultiple) {
     LBNPool mapMgr;
     mapMgr.insert_usedLBNList(0);
     mapMgr.insert_usedLBNList(1);
@@ -15,7 +15,7 @@ TEST(LBNPool, InsertAndGetMultiple) {
     EXPECT_TRUE(mapMgr.get_usedLBNList(1));
 }
 
-TEST(LBNPool, Remove) {
+TEST(LBN_pool, Remove) {
     LBNPool mapMgr;
     mapMgr.insert_usedLBNList(0);
     EXPECT_TRUE(mapMgr.get_usedLBNList(0));
@@ -23,7 +23,7 @@ TEST(LBNPool, Remove) {
     EXPECT_FALSE(mapMgr.get_usedLBNList(0));
 }
 
-TEST(LBNPool, RemoveMultiple) {
+TEST(LBN_pool, RemoveMultiple) {
     LBNPool mapMgr;
     mapMgr.insert_usedLBNList(0);
     mapMgr.insert_usedLBNList(1);
@@ -34,7 +34,7 @@ TEST(LBNPool, RemoveMultiple) {
     EXPECT_TRUE(mapMgr.get_usedLBNList(1));
 }
 
-TEST(LBNPool, RemoveNonExistent) {
+TEST(LBN_pool, RemoveNonExistent) {
     LBNPool mapMgr;
     mapMgr.insert_usedLBNList(0);
     EXPECT_TRUE(mapMgr.get_usedLBNList(0));
@@ -42,19 +42,19 @@ TEST(LBNPool, RemoveNonExistent) {
     EXPECT_TRUE(mapMgr.get_usedLBNList(0)); // Should still be present
 }
 
-TEST(LBNPool, InsertFreeLBN) {
+TEST(LBN_pool, InsertFreeLBN) {
     LBNPool mapMgr;
     mapMgr.insert_freeLBNList(0);
     EXPECT_TRUE(mapMgr.get_freeLBNList(0));
 }
-TEST(LBNPool, InsertFreeLBNMultiple) {
+TEST(LBN_pool, InsertFreeLBNMultiple) {
     LBNPool mapMgr;
     mapMgr.insert_freeLBNList(0);
     mapMgr.insert_freeLBNList(1);
     EXPECT_TRUE(mapMgr.get_freeLBNList(0));
     EXPECT_TRUE(mapMgr.get_freeLBNList(1));
 }
-TEST(LBNPool, RemoveFreeLBN) {
+TEST(LBN_pool, RemoveFreeLBN) {
     LBNPool mapMgr;
     mapMgr.insert_freeLBNList(0);
     EXPECT_TRUE(mapMgr.get_freeLBNList(0));
@@ -62,7 +62,7 @@ TEST(LBNPool, RemoveFreeLBN) {
     EXPECT_FALSE(mapMgr.get_freeLBNList(0));
 }
 
-TEST(LBNPool, RemoveFreeLBNMultiple) {
+TEST(LBN_pool, RemoveFreeLBNMultiple) {
     LBNPool mapMgr;
     mapMgr.insert_freeLBNList(0);
     mapMgr.insert_freeLBNList(1);
@@ -72,7 +72,7 @@ TEST(LBNPool, RemoveFreeLBNMultiple) {
     EXPECT_FALSE(mapMgr.get_freeLBNList(0));
     EXPECT_TRUE(mapMgr.get_freeLBNList(1));
 }
-TEST(LBNPool, RemoveFreeLBNNonExistent) {
+TEST(LBN_pool, RemoveFreeLBNNonExistent) {
     LBNPool mapMgr;
     mapMgr.insert_freeLBNList(0);
     EXPECT_TRUE(mapMgr.get_freeLBNList(0));
