@@ -45,19 +45,26 @@ uint64_t mapping::getLBN(const std::string& filename){
     return mappingTable[filename];
 }
 
-void mapping::remove(const std::string& filename){
-    
+void mapping::remove(const std::string& filename) {
+    auto it = mappingTable.find(filename);
+    if (it == mappingTable.end()) {
+        pr_info("File \"%s\" does not exist in the mapping table", filename.c_str());
+        return; 
+    }
+    uint64_t lbn = it->second;
+    mappingTable.erase(it);
+    lbnPoolManager.remove_usedLBNList(lbn);   
+    lbnPoolManager.insert_freeLBNList(lbn);    
 }
 
-void mapping::print_mapping(mappingTablePerPage *page) {
-    std::cout << "===== Mapping Table Page =====\n";
+
+void mapping::dump_mapping(mappingTablePerPage *page) {
+    pr_info("Dumping mapping table to page...");
+    pr_info("===== Mapping Table Page =====");
     size_t count = 0;
     for (size_t i = 0; i < page->entry_num; i++) {
         mappingEntry *entry = &page->entry[i];
-        std::cout << " [" << std::setw(3) << count++ << "] "
-                  << "FileName: " << entry->fileName
-                  << " | LBN: " << entry->lbn << "\n";
+        pr_info("Entry %zu: FileName: %s -> LBN: %lu", count, entry->fileName, entry->lbn);
     }
-
-    std::cout << "================================\n";
+    pr_info("================================");
 }

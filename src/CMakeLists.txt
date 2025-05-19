@@ -1,4 +1,4 @@
 file(GLOB SRC_FILES *.cc)
-
+list(REMOVE_ITEM SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
 add_library(mapping_lib ${SRC_FILES})
 target_include_directories(mapping_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)

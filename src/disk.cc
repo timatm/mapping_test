@@ -1,4 +1,5 @@
 #include "disk.hh"
+#include "print.hh"
 #include <cstdio>
 #include <cstring>
 #include <stdexcept>
@@ -17,8 +18,8 @@ void Disk::open(const std::string& filename) {
     // Calculate total blocks
     std::fseek(file, 0, SEEK_END);
     uint64_t fileSize = std::ftell(file);
-    std::cout << "Total LBN size: " << LBN_NUM << std::endl;
-    std::cout << "Open disk success" << std::endl;
+    pr_info("Total LBN size: %lu", LBN_NUM);
+    pr_info("Open disk success");
     std::rewind(file);
 }
 
@@ -73,8 +74,7 @@ int Disk::writeSStable(uint64_t lbn ,uint8_t *buffer) {
             lpn = lpn + i;
             uint16_t written = write(lpn, page_ptr);
             if (written != 0) {
-                std::cout << "[ERROR] writeSStable failed at page:" << i  << " LPN: " << lpn << std::endl;
-                break;
+                pr_info("[ERROR] writeSStable failed at page: %d LPN: %lu", i, lpn);
             }
             ret += written;
         }
@@ -94,7 +94,7 @@ int Disk::readSStable(uint64_t lbn ,uint8_t *buffer) {
 
         int read_result = read(lpn, page_ptr);
         if (read_result != 0) {
-            std::cout << "[ERROR] readSStable failed at page:" << i  << " LPN: " << lpn << std::endl;
+            pr_info("[ERROR] readSStable failed at page: %d LPN: %lu", i, lpn);
             break;
         }
         ret += read_result;

@@ -9,19 +9,23 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-message(STATUS "Current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
-file(GLOB TEST_SRC *.cc)
-message(STATUS "TEST_SRC = ${TEST_SRC}")
+enable_testing()
+include(GoogleTest)
 
-list(LENGTH TEST_SRC NUM_SOURCES)
-if(NUM_SOURCES EQUAL 0)
-  message(WARNING "No test source files found!  (tests/*.cc, *.cpp)")
-else()
-  enable_testing()
-  add_executable(runTests ${TEST_SRC})
-  target_link_libraries(runTests PRIVATE mapping_lib gtest gtest_main pthread)
+# 抓取 tests/*.cc
+file(GLOB TEST_SRC CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 
-  include(GoogleTest)
-  # add_test(NAME test_lbnPool COMMAND runTests)
-  add_test(NAME AllTests COMMAND runTests)
-endif()
+foreach(src ${TEST_SRC})
+    # test_lbnPool.cc -> test_lbnPool
+    get_filename_component(test_name ${src} NAME_WE)
+
+    add_executable(${test_name} ${src})
+    target_link_libraries(${test_name}
+        PRIVATE gtest gtest_main mapping_lib pthread)
+
+    # 每支檔案算一群，前綴就是檔名.
+    gtest_discover_tests(
+        ${test_name}
+        TEST_PREFIX ${test_name}.
+        WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+endforeach()

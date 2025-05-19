@@ -8,8 +8,22 @@
 #include <iostream>
 
 // freeLBNList 操作
+void LBNPool::init_lbn_pool(){
+    for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
+        while (!freeLBNList[ch].empty()) {
+            freeLBNList[ch].pop_front();
+        }
+    }
+    usedLBNList.clear();
+    lastChannel = CHANNEL_NUM-1;
+}
+
 void LBNPool::insert_freeLBNList(uint64_t lbn) {
     uint64_t channel = LBN2CH(lbn);
+    uint64_t package = LBN2PACKAGE(lbn);
+    uint64_t die = LBN2DIE(lbn);
+    uint64_t plane = LBN2PLANE(lbn);
+    pr_info("insert free LBN:%8lu to [CH]: %lu [PACK]: %lu [DIE]: %lu [PLANE]: %lu", lbn, channel, package, die, plane);
     freeLBNList[channel].push_back(lbn);
 }
 
@@ -56,18 +70,19 @@ bool LBNPool::get_usedLBNList(uint64_t lbn) {
 
 // 附加：debug print
 void LBNPool::print() {
-    std::cout << "=== Used LBN List ===\n";
+    pr_info("===== LBN Pool =====");
+    pr_info("=== Used LBN List ===");
     for (auto lbn : usedLBNList)
-        std::cout << lbn << " ";
-    std::cout << "\n";
-
-    std::cout << "=== Free LBN List ===\n";
+        pr_info("%lu ", lbn);
+    pr_info("\n");
+    pr_info("=== Free LBN List ===");
     for (size_t ch = 0; ch < CHANNEL_NUM; ++ch) {
-        std::cout << "Channel " << ch << ": ";
+        pr_info("Channel %lu: ", ch);
         for (auto lbn : freeLBNList[ch])
-            std::cout << lbn << " ";
-        std::cout << "\n";
+            pr_info("%lu ", lbn);
+        pr_info("\n");
     }
+    pr_info("======================\n");
 }
 
 uint64_t LBNPool::worst_policy(){
@@ -84,26 +99,28 @@ uint64_t LBNPool::worst_policy(){
 
 uint64_t LBNPool::RRpolicy(){
     uint64_t lbn = INVALIDLBN;
-    int ch = (lastChannel + 1) % CHANNEL_NUM;
-    while(lbn == INVALIDLBN){
-        if(freeLBNList[ch].size() != 0){
+
+    int start_ch = (lastChannel + 1) % CHANNEL_NUM;
+    int ch = start_ch;
+
+    do {
+        if (!freeLBNList[ch].empty()) {
             lbn = pop_freeLBNList(ch);
             insert_usedLBNList(lbn);
+            lastChannel = ch;  // 記得更新 lastChannel
             return lbn;
         }
-        ch = (ch + 1)% CHANNEL_NUM;
-        if(ch == lastChannel+1){
-            std::cout << "LBN pool(RRpolicy) doesn't have free LBN" << std::endl;
-            
-        }
-        return INVALIDLBN;
-    }
+        ch = (ch + 1) % CHANNEL_NUM;
+    } while (ch != start_ch);  // 繞一圈回到起點代表全部都檢查過
+    pr_info("LBN pool(RRpolicy) doesn't have free LBN");
+    return INVALIDLBN;
+
 }
 
 uint64_t LBNPool::level2CH(int level){
     uint64_t lbn = INVALIDLBN;
     if (level < 0 || level >= CHANNEL_NUM) {
-        std::cout << "Invalid level index: " << level << std::endl;
+        pr_info("Invalid level index: %d", level);
         return INVALIDLBN;
     }
     if(freeLBNList[level].size() != 0){
@@ -112,8 +129,7 @@ uint64_t LBNPool::level2CH(int level){
         return lbn;
     }
     else{
-        std::cout << "LBN pool(level2CH) doesn't have free LBN" << std::endl;
-        
+        pr_info("LBN pool(level2CH) doesn't have free LBN");
     }
     return INVALIDLBN;
 }
@@ -131,26 +147,27 @@ uint64_t LBNPool::best(std::queue<int> CHpriority){
             return lbn;
         }
     }
-    if(CHpriority.size() == 0){
-        std::cout << "LBN pool(best) doesn't have free LBN" << std::endl;
-        return INVALIDLBN;
-    }
+    pr_info("LBN pool(best) doesn't have free LBN");
     return INVALIDLBN;
 }
-
-uint64_t LBNPool::select_lbn(int type){
+template<typename T>
+uint64_t LBNPool::select_lbn(int type,T info){
     uint64_t lbn = 0;
     switch(type){
         case WROSTCASE:
-
+            lbn = worst_policy();
+            break;
         case RR:
-
+            lbn = RRpolicy();
+            break;
         case LEVEL2CH:
-
+            lbn = level2CH(info);
+            break;
         case BEST:
-
+            lbn = best(info);
+            break;
         default:
-            std::cout << "The type of policy is invalid ,check your pass parameter" << std::endl;
+            pr_info("The type of policy is invalid ,check your pass parameter");
     }
     
     return lbn;
