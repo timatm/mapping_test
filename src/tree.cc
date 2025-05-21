@@ -31,10 +31,7 @@ void Tree::insert_node(TreeNode *parent,TreeNode *node){
 bool Tree::node_move(TreeNode *target,TreeNode *destination){
     if (!destination || !target) return false;
 
-    auto it = source->children.find(childName);
-    if (it == source->children.end()) return false;  // 沒這個子節點
-
-    std::unique_ptr<TreeNode> moving = std::move(it->second);
+    std::unique_ptr<TreeNode> moving = std::move(target);
     source->children.erase(it);                      // 移除舊位置
 
     moving->parent = target;                         // 更新 parent
