@@ -22,23 +22,33 @@ void Tree::insert_node(TreeNode *parent,TreeNode *node){
             moveList.push_back(cur);
         }
     }
-
-    parent->children[node->filename] = std::make_unique<TreeNode>(node->filename,node->levelInfo,node->channelInfo,node->rangeMin,node->rangeMax);
+    std::unique_ptr<TreeNode> new_node = std::make_unique<TreeNode>(node->filename,node->levelInfo,node->channelInfo,node->rangeMin,node->rangeMax);
+    for(auto& child : moveList) 
+    {
+        std::string filename = child->filename;
+        child->parent = node;
+        new_node->children[filename] = std::move(child->children[filename]);
+    }
+    parent->children[node->filename] = std::move(new_node);
     
-
 }
 
-bool Tree::node_move(TreeNode *target,TreeNode *destination){
-    if (!destination || !target) return false;
+bool Tree::node_move(std::unique_ptr<TreeNode>* target, std::unique_ptr<TreeNode>* destination) {
+    if (!target || !destination || !*target || !*destination) return false;
 
-    std::unique_ptr<TreeNode> moving = std::move(target);
-    source->children.erase(it);                      // 移除舊位置
+    std::string key = (*target)->filename;
+    TreeNode *parent = (*target)->parent;
 
-    moving->parent = target;                         // 更新 parent
-    target->children[childName] = std::move(moving); // 加入新位置
+    (*target)->parent = destination->get();
 
+    (*destination)->children[key] = std::move(*target);
+
+    if (parent) {
+        parent->children.erase(key);
+    }
     return true;
 }
+
 
 
 

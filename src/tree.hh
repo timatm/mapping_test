@@ -40,7 +40,7 @@ public:
         root(std::make_unique<TreeNode>("dummy_root", 0, -1, -1, -1, ++id_counter)) {}
 
     void insert_tree(std::unique_ptr<TreeNode> subtree);
-    bool node_move(TreeNode *target,TreeNode *destination);
+    bool node_move(std::unique_ptr<TreeNode>* target, std::unique_ptr<TreeNode>* destination);
     void insert_node(TreeNode *parent,TreeNode *node);
     TreeNode * search_insert_parent(TreeNode *node);
 };
