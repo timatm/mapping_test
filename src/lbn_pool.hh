@@ -17,7 +17,7 @@ class LBNPool {
 public:
     std::unordered_set<uint64_t> usedLBNList;
     std::array<std::deque<uint64_t>, CHANNEL_NUM> freeLBNList;
-    int lastChannel;
+    int lastUsedChannel;
 
     void init_lbn_pool();
     void insert_freeLBNList(uint64_t lbn);

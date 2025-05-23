@@ -15,7 +15,7 @@ void LBNPool::init_lbn_pool(){
         }
     }
     usedLBNList.clear();
-    lastChannel = CHANNEL_NUM-1;
+    lastUsedChannel = CHANNEL_NUM-1;
 }
 
 void LBNPool::insert_freeLBNList(uint64_t lbn) {
@@ -100,14 +100,14 @@ uint64_t LBNPool::worst_policy(){
 uint64_t LBNPool::RRpolicy(){
     uint64_t lbn = INVALIDLBN;
 
-    int start_ch = (lastChannel + 1) % CHANNEL_NUM;
+    int start_ch = (lastUsedChannel + 1) % CHANNEL_NUM;
     int ch = start_ch;
 
     do {
         if (!freeLBNList[ch].empty()) {
             lbn = pop_freeLBNList(ch);
             insert_usedLBNList(lbn);
-            lastChannel = ch;  // 記得更新 lastChannel
+            lastUsedChannel = ch; 
             return lbn;
         }
         ch = (ch + 1) % CHANNEL_NUM;

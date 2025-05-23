@@ -40,12 +40,15 @@ public:
         root(std::make_unique<TreeNode>("dummy_root", 0, -1, -1, -1, ++id_counter)) {}
 
     void insert_tree(std::unique_ptr<TreeNode> subtree);
-    bool node_move(std::unique_ptr<TreeNode>* target, std::unique_ptr<TreeNode>* destination);
-    void insert_node(TreeNode *parent,TreeNode *node);
+    bool move_node(std::unique_ptr<TreeNode>* target, std::unique_ptr<TreeNode>* destination);
+    void insert_node(TreeNode *node);
+    void insert_node2parent(TreeNode *parent,TreeNode *node);
+    void remove_node(TreeNode *node);
+
+    TreeNode * find_node(std::string filename);
     TreeNode * search_insert_parent(TreeNode *node);
+    void dumpTree(const TreeNode* node, int indent);
 };
-
-
 
 
 

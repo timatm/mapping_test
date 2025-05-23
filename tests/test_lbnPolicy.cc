@@ -68,7 +68,7 @@ TEST(LBN_policy, RR_policy_adaptive) {
     }
 
     // run RR policy to check the result
-    int cur = (pool.lastChannel + 1) % CHANNEL_NUM;   // RR 從 lastChannel+1 開始
+    int cur = (pool.lastUsedChannel + 1) % CHANNEL_NUM; 
     for (std::size_t i = 0; i < input.size(); ++i) {
         while (buckets[cur].empty())
             cur = (cur + 1) % CHANNEL_NUM;

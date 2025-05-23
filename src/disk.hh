@@ -17,7 +17,7 @@ public:
     int removeSStable(uint64_t lbn);
 private:
     FILE* file = nullptr;
-    uint64_t LBN2LPN(uint64_t lbn);
+    uint64_t LBN2LPN(uint64_t lbn); // need modfiy
 };
 #endif // __DISK_H__
 extern Disk disk;
