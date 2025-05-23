@@ -88,13 +88,42 @@ bool Tree::move_node(std::unique_ptr<TreeNode>* target, std::unique_ptr<TreeNode
 }
 
 
-TreeNode * Tree::find_node(std::string filename){
-    
-    for(auto& [filename , child] :root->children){
-        TreeNode *cur = root.get();
-        
+TreeNode * Tree::find_node(std::string filename,TreeNode *cur){
+    if (!cur) return nullptr;
+    if(cur->filename == filename) return cur;
+    for(auto & [name, upChild] : cur->children) {
+        TreeNode* child = upChild.get();
+        if (!child) continue;
+        TreeNode* found = find_node(filename, child);
+        if (found) return found;
     }
+    return nullptr;
 }
+
+
+std::queue<std::string> Tree::search_range(std::string key){
+    std::queue<std::string> sstableList;
+    TreeNode* cur = root.get();
+    
+    while (cur) {
+        bool found = false;
+        for (auto& [filename, child] : cur->children) {
+            TreeNode* childNode = child.get();
+            if (!childNode) continue;
+
+            if (childNode->rangeMin <= key && key <= childNode->rangeMax) {
+                sstableList.push(childNode->filename);
+                cur = childNode;
+                found = true;
+                break;
+            }
+        }
+        if (!found) break; 
+    }
+
+    return sstableList;
+}
+
 
 TreeNode* Tree::search_insert_parent(TreeNode* node)
 {

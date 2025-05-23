@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-
+#include <queue>
 #include "print.hh"
 #include "def.hh"
 
@@ -13,17 +13,17 @@ struct TreeNode{
     std::string filename;
     int levelInfo;
     int channelInfo;
-    int rangeMin;
-    int rangeMax;
+    std::string rangeMin;
+    std::string rangeMax;
     std::unordered_map<std::string, std::unique_ptr<TreeNode> > children;
     TreeNode *parent = nullptr;
-    TreeNode(std::string name, int level,int ch,int min, int max):
+    TreeNode(std::string name, int level,int ch,std::string min, std::string max):
         filename(std::move(name)),
         levelInfo(level),
         channelInfo(ch),
         rangeMin(min),
         rangeMax(max){}
-    TreeNode(std::string name, int level,int min, int max):
+    TreeNode(std::string name, int level,std::string min, std::string max):
         filename(std::move(name)),
         levelInfo(level),
         channelInfo(-1),
@@ -45,7 +45,9 @@ public:
     void insert_node2parent(TreeNode *parent,TreeNode *node);
     void remove_node(TreeNode *node);
 
-    TreeNode * find_node(std::string filename);
+
+    std::queue<std::string> search_range(std::string key);
+    TreeNode * find_node(std::string filename,TreeNode *cur);
     TreeNode * search_insert_parent(TreeNode *node);
     void dumpTree(const TreeNode* node, int indent);
 };
