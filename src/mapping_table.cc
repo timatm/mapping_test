@@ -2,7 +2,6 @@
 #include <iomanip>
 #include <algorithm>
 
-
 Tree tree;
 void mapping::init_mapping_table(){
     uint64_t mappingPageLBN = MAPPINGLBN;

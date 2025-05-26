@@ -148,7 +148,6 @@ std::queue<std::shared_ptr<TreeNode>> Tree::search_key_range(int min,int max){
     while (!checkList.empty()) {
         std::shared_ptr<TreeNode> cur = checkList.front();
         checkList.pop();
-
         if (!cur || visited.count(cur.get())) continue;
         visited.insert(cur.get());
 
