@@ -11,6 +11,9 @@
 #include <deque>
 #include <queue>
 
+#include "tree.hh"
+
+extern Tree *tree;
 #include "def.hh"
 #include "print.hh"
 class LBNPool {

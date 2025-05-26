@@ -1,6 +1,9 @@
 #include "mapping_table.hh"
 #include <iomanip>
+#include <algorithm>
 
+
+Tree tree;
 void mapping::init_mapping_table(){
     uint64_t mappingPageLBN = MAPPINGLBN;
     mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN);
@@ -19,18 +22,21 @@ void mapping::init_mapping_table(){
     }
 
 
-    for (const auto& pair : mappingTable) {
-        lbnPoolManager.usedLBNList.insert(pair.second);
+    for (const auto& [filename ,lbn] : mappingTable) {
+        int ch = LBN2CH(lbn);
+        lbnPoolManager.usedLBNList[ch].push_back(lbn);
     }
 
     for (uint64_t lbn = 0; lbn < LBN_NUM; lbn++) {
-        if (lbnPoolManager.usedLBNList.find(lbn) == lbnPoolManager.usedLBNList.end()) {
+        int ch = LBN2CH(lbn);
+        auto it = std::find(lbnPoolManager.usedLBNList[ch].begin(), lbnPoolManager.usedLBNList[ch].end(), lbn);
+        if (it != lbnPoolManager.usedLBNList[ch].end()) {
             lbnPoolManager.freeLBNList[LBN2CH(lbn)].push_back(lbn);
         }
     }
 }
 
-void mapping::insert(const std::string& filename, uint64_t lbn) {
+void mapping::insert_mapping(const std::string& filename, uint64_t lbn) {
     if (mappingTable.find(filename) != mappingTable.end()) {
         std::cerr << "File already exists in the mapping table , update mapping to " << lbn << "\n";
     }
@@ -45,7 +51,7 @@ uint64_t mapping::getLBN(const std::string& filename){
     return mappingTable[filename];
 }
 
-void mapping::remove(const std::string& filename) {
+void mapping::remove_mapping(const std::string& filename) {
     auto it = mappingTable.find(filename);
     if (it == mappingTable.end()) {
         pr_info("File \"%s\" does not exist in the mapping table", filename.c_str());
@@ -67,4 +73,13 @@ void mapping::dump_mapping(mappingTablePerPage *page) {
         pr_info("Entry %zu: FileName: %s -> LBN: %lu", count, entry->fileName, entry->lbn);
     }
     pr_info("================================");
+}
+
+void mapping::write_sstable(hostInfo request,char *buffer){
+    std::string filename = request.filename;
+    int level = request.levelInfo;
+    int rangeMin = request.rangeMin;
+    int rangeMax = request.rangeMax;
+    uint64_t lbn = lbnPoolManager.select_lbn(1,request);
+
 }

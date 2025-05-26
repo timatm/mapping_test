@@ -80,6 +80,24 @@ struct mappingTablePerPage {
 };
 #pragma pack(pop)
 
+
+struct hostInfo
+{
+    std::string filename;
+    int levelInfo;
+    int channelInfo;
+    int rangeMin;
+    int rangeMax;
+    hostInfo(std::string name, int level, int ch, int min, int max) :
+        filename(std::move(name)),
+        levelInfo(level),
+        channelInfo(ch),
+        rangeMin(min),
+        rangeMax(max) {}
+    hostInfo(std::string name, int level, int min, int max) :
+        hostInfo(std::move(name), level, -1, min, max) {}
+};
+
 static_assert(sizeof(mappingTablePerPage) == 16384, "MappingTablePage must be 16KB");
 
 

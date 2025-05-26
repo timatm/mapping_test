@@ -12,8 +12,8 @@ public:
     void close();
     int read(uint64_t lpn, uint8_t * buffer);
     int write(uint64_t lpn, const uint8_t * buffer);
-    int writeSStable(uint64_t lbn,uint8_t *buffer);
-    int readSStable(uint64_t lbn,uint8_t *buffer);
+    int writeBlock(uint64_t lbn,uint8_t *buffer);
+    int readBlock(uint64_t lbn,uint8_t *buffer);
     int removeSStable(uint64_t lbn);
 private:
     FILE* file = nullptr;

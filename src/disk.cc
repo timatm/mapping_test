@@ -4,7 +4,6 @@
 #include <cstring>
 #include <stdexcept>
 #include <iostream>
-Disk disk;
 void Disk::open(const std::string& filename) {
     file = std::fopen(filename.c_str(), "r+b");
     if (!file) {
@@ -18,7 +17,7 @@ void Disk::open(const std::string& filename) {
     // Calculate total blocks
     std::fseek(file, 0, SEEK_END);
     uint64_t fileSize = std::ftell(file);
-    pr_info("Total LBN size: %lu", LBN_NUM);
+    pr_info("Total LBN num: %lu", LBN_NUM);
     pr_info("Open disk success");
     std::rewind(file);
 }
@@ -65,7 +64,7 @@ int Disk::write(uint64_t lpn,const uint8_t * buffer) {
     return 0;
 }
 
-int Disk::writeSStable(uint64_t lbn ,uint8_t *buffer) {
+int Disk::writeBlock(uint64_t lbn ,uint8_t *buffer) {
     uint16_t ret = 0;
     uint64_t lpn = LBN2LPN(lbn);
     if (file) {
@@ -74,7 +73,7 @@ int Disk::writeSStable(uint64_t lbn ,uint8_t *buffer) {
             lpn = lpn + i;
             uint16_t written = write(lpn, page_ptr);
             if (written != 0) {
-                pr_info("[ERROR] writeSStable failed at page: %d LPN: %lu", i, lpn);
+                pr_info("[ERROR] write block failed at page: %d LPN: %lu", i, lpn);
             }
             ret += written;
         }
@@ -83,7 +82,7 @@ int Disk::writeSStable(uint64_t lbn ,uint8_t *buffer) {
     return ret;
 }
 
-int Disk::readSStable(uint64_t lbn ,uint8_t *buffer) {
+int Disk::readBlock(uint64_t lbn ,uint8_t *buffer) {
     uint16_t ret = 0;
     uint64_t lpn = LBN2LPN(lbn);
     if (file) {
@@ -94,7 +93,7 @@ int Disk::readSStable(uint64_t lbn ,uint8_t *buffer) {
 
         int read_result = read(lpn, page_ptr);
         if (read_result != 0) {
-            pr_info("[ERROR] readSStable failed at page: %d LPN: %lu", i, lpn);
+            pr_info("[ERROR] read block failed at page: %d LPN: %lu", i, lpn);
             break;
         }
         ret += read_result;

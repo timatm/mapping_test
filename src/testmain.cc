@@ -47,49 +47,6 @@ void dumpGraph(const std::shared_ptr<TreeNode>& node,
     }
 }
 
-
-void insert_node_cli() {
-    std::string filename;
-    int min, max;
-    int level;
-
-    std::cout << "Enter filename: ";
-    std::cin >> filename;
-    std::cout << "Enter level: ";
-    std::cin >> level;
-    std::cout << "Enter rangeMin: ";
-    std::cin >> min;
-    std::cout << "Enter rangeMax: ";
-    std::cin >> max;
-
-    auto node = std::make_shared<TreeNode>(filename, level, min, max);
-    tree.insert_node(node);
-    nodeMap[filename] = node;
-
-    std::cout << "✅ Inserted node: " << filename << "\n";
-}
-
-void remove_node_cli() {
-    std::string filename;
-    std::cout << "Enter filename to remove: ";
-    std::cin >> filename;
-
-    auto it = nodeMap.find(filename);
-    if (it != nodeMap.end()) {
-        tree.remove_node(it->second);
-        nodeMap.erase(it);
-        std::cout << "🗑️ Removed node: " << filename << "\n";
-    } else {
-        std::cout << "⚠️ Node not found.\n";
-    }
-}
-
-void print_graph_cli() {
-    std::cout << "\n🔍 Tree structure:\n";
-    dumpGraph(tree.root);
-    std::cout << "\n";
-}
-
 void print_all_children(const std::shared_ptr<TreeNode>& node,
                         int indent = 0,
                         std::unordered_set<const TreeNode*>* visited = nullptr) {

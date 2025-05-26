@@ -52,9 +52,10 @@ public:
     void insert_node(std::shared_ptr<TreeNode> node);
     void remove_node(std::shared_ptr<TreeNode> node);
 
-
+    std::queue<std::shared_ptr<TreeNode>> search_key_range(int min,int max);
     std::queue<std::shared_ptr<TreeNode>> search_key(int key);
     TreeNode * find_node(std::string filename,TreeNode *cur);
+    std::vector<int> get_next_ch_list(hostInfo *);
     void dumpGraph(const std::shared_ptr<TreeNode>& node,
                int indent = 0,
                std::unordered_set<const TreeNode*>* visited = nullptr);
