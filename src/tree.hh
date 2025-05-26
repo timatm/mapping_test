@@ -53,7 +53,7 @@ public:
     void remove_node(std::shared_ptr<TreeNode> node);
 
 
-    std::queue<std::string> search_range(std::string key);
+    std::queue<std::shared_ptr<TreeNode>> search_key(int key);
     TreeNode * find_node(std::string filename,TreeNode *cur);
     void dumpGraph(const std::shared_ptr<TreeNode>& node,
                int indent = 0,

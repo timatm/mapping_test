@@ -1,0 +1,8 @@
+insert A 1 5 20
+insert B 1 21 50
+insert C 2 10 30
+insert D 2 40 45
+insert E 3 0 2
+dump
+search 10
+children A

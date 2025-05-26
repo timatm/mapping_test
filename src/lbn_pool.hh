@@ -15,7 +15,7 @@
 #include "print.hh"
 class LBNPool {
 public:
-    std::unordered_set<uint64_t> usedLBNList;
+    std::array<std::deque<uint64_t>, CHANNEL_NUM> usedLBNList;
     std::array<std::deque<uint64_t>, CHANNEL_NUM> freeLBNList;
     int lastUsedChannel;
 

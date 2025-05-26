@@ -14,7 +14,11 @@ void LBNPool::init_lbn_pool(){
             freeLBNList[ch].pop_front();
         }
     }
-    usedLBNList.clear();
+    for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
+        while (!usedLBNList[ch].empty()) {
+            usedLBNList[ch].pop_front();
+        }
+    }
     lastUsedChannel = CHANNEL_NUM-1;
 }
 
@@ -57,15 +61,30 @@ uint64_t LBNPool::pop_freeLBNList(int ch){
 
 // usedLBNList 操作
 void LBNPool::insert_usedLBNList(uint64_t lbn) {
-    usedLBNList.insert(lbn);
+    int ch = LBN2CH(lbn);
+    usedLBNList[ch].push_back(lbn);
 }
 
 bool LBNPool::remove_usedLBNList(uint64_t lbn) {
-    return usedLBNList.erase(lbn) > 0;
+    int ch = LBN2CH(lbn);
+    auto &deque = usedLBNList[ch];
+    for (auto it = deque.begin(); it != deque.end(); ++it) {
+        if (*it == lbn) {
+            deque.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool LBNPool::get_usedLBNList(uint64_t lbn) {
-    return usedLBNList.find(lbn) != usedLBNList.end();
+    int ch = LBN2CH(lbn);
+    auto& deque = usedLBNList[ch];
+    for (const auto& val : deque) {
+        if (val == lbn)
+            return true;
+    }
+    return false;
 }
 
 // 附加：debug print
