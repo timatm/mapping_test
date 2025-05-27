@@ -5,7 +5,9 @@
 extern Tree tree;
 void mapping::init_mapping_table(){
     uint64_t mappingPageLBN = MAPPINGLBN;
-    mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN);
+    size_t size = PAGE_SIZE;
+    uint8_t * buffer  = (uint8_t*)malloc(sizeof(uint8_t) * size);
+    mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN,buffer,size);
     
     while(mappingTablePtr->nextPage != 0) {
         for (int i = 0; i < mappingTablePtr->entry_num; i++) {
@@ -17,7 +19,7 @@ void mapping::init_mapping_table(){
             }
         }
         mappingPageLBN++;
-        mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN);
+        mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN,buffer,size);
     }
 
 

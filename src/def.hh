@@ -10,6 +10,8 @@
 #define PAGE_NUM 128
 #define PAGE_SIZE 16384
 
+#define BLOCK_SIZE PAGE_SIZE*PAGE_NUM
+
 #define LOG2_CEIL(x) ( \
     ((x) <= 1) ? 0 : \
     ((x) <= 2) ? 1 : \
@@ -43,6 +45,7 @@
 #define OPERATION_FAILURE -1
 
 #define DISPATCH_POLICY 3 // 0: worst case, 1: RR, 2: level2CH, 3: my_policy
+
 
 
 #define INVALIDLBN 0xFFFFFFFFFFFFFFFF
@@ -103,6 +106,54 @@ struct hostInfo
 };
 
 static_assert(sizeof(mappingTablePerPage) == 16384, "MappingTablePage must be 16KB");
+
+
+
+#pragma pack(push, 1)
+
+struct slotFormat {
+    uint8_t key_size;           // 1 B
+    uint8_t key[40];            // 40 B
+
+    struct {
+        union {
+            uint32_t cpdpbp;    // 4 B = packed bit-field
+            struct {
+                uint32_t ch      : 3;
+                uint32_t plane   : 3;
+                uint32_t die     : 3;
+                uint32_t package : 3;
+                uint32_t block   : 10;
+                uint32_t page    : 10;
+            };
+        };
+        uint8_t offset[11];     // 11 B
+    } value_ptr;                // = 15 B
+
+    union {
+        uint8_t raw[8];         // raw access
+        struct {
+            uint64_t seq  : 56; // 7 B
+            uint64_t type : 8;  // 1 B
+        };
+    } info;                     // = 8 B
+};
+
+#define SLOT_NUM PAGE_SIZE/sizeof(slotFormat)
+struct pageFormat
+{
+    slotFormat slot[SLOT_NUM];
+};
+struct  SStableFormat
+{
+    pageFormat SStablePerPage[PAGE_NUM];
+};
+
+
+static_assert(sizeof(slotFormat) == 64, "slotFormat must be 64 bytes");
+static_assert(sizeof(pageFormat) == PAGE_SIZE ,"pageformat must be same to page size");
+static_assert(sizeof(SStableFormat) == BLOCK_SIZE ,"SStableFormat must be same to block size");
+#pragma pack(pop)
 
 
 #endif // __DEF_HH__
