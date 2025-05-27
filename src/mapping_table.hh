@@ -29,7 +29,7 @@ public:
 
     int write_sstable(hostInfo request,char *buffer);
     int read_sstable(hostInfo request ,char *buffer);
-    void search_key(int key);
+    int search_key(int key);
 };
 
 #endif // __MAPPING_TABLE_HH__

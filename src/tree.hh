@@ -40,11 +40,11 @@ struct TreeNode : public std::enable_shared_from_this<TreeNode>{
         rangeMin(min),
         rangeMax(max){}
     TreeNode(std::string name, int level,int min, int max):
-        TreeNode(std::move(name), level, -1, min,max){}
+        TreeNode(std::move(name), level,-1, min,max){}
 };
 
 class Tree {
-public:
+public: 
     std::shared_ptr<TreeNode> root;           
 
     Tree() :

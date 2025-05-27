@@ -41,7 +41,7 @@ public:
         WROSTCASE = 0,
         RR        = 1,
         LEVEL2CH  = 2,
-        BEST      = 3
+        MYPOLICY      = 3
     };
 };
 
