@@ -27,8 +27,8 @@ public:
 
     void dump_mapping(mappingTablePerPage *page);
 
-    void write_sstable(hostInfo request,char *buffer);
-    void read_sstable(hostInfo request ,char *buffer);
+    int write_sstable(hostInfo request,char *buffer);
+    int read_sstable(hostInfo request ,char *buffer);
     void search_key(int key);
 };
 

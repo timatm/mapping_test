@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <algorithm>
 
-Tree tree;
+extern Tree tree;
 void mapping::init_mapping_table(){
     uint64_t mappingPageLBN = MAPPINGLBN;
     mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN);
@@ -74,11 +74,69 @@ void mapping::dump_mapping(mappingTablePerPage *page) {
     pr_info("================================");
 }
 
-void mapping::write_sstable(hostInfo request,char *buffer){
+int mapping::write_sstable(hostInfo request,char *buffer){
+    int err = -1;
     std::string filename = request.filename;
     int level = request.levelInfo;
     int rangeMin = request.rangeMin;
     int rangeMax = request.rangeMax;
-    uint64_t lbn = lbnPoolManager.select_lbn(1,request);
+    // Check if the file already exists in the mapping table
+    if (mappingTable.count(filename)) {
+        pr_info("ERROR: Mapping already exists, refusing to overwrite file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    if (!buffer) {
+        pr_info("ERROR: Null buffer provided for write to file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    uint64_t lbn = lbnPoolManager.select_lbn(DISPATCH_POLICY,request);
+    if (lbn == INVALIDLBN) {
+        pr_info("Failed to allocate LBN for file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    pr_info("Allocated LBN %lu for file: %s", lbn, filename.c_str());
+    err = persistenceManager.disk.writeBlock(lbn, (uint8_t *)buffer);
+    pr_info("Wrote data to LBN %lu for file: %s", lbn, filename.c_str());
+    if(err == OPERATION_SUCCESS){
+        pr_info("Write block to LBN %lu for file: %s successfully", lbn, filename.c_str());
+        insert_mapping(filename, lbn);
+        std::shared_ptr<TreeNode> node = std::make_shared<TreeNode>(filename, level, -1, rangeMin, rangeMax);
+        node->channelInfo = LBN2CH(lbn);
+        tree.insert_node(node);
+        pr_info("Inserted node for file: %s at level %d, channel %d, range [%d, %d]", 
+        filename.c_str(), level, node->channelInfo, rangeMin, rangeMax);
+    } else {
+        pr_info("Failed to write block to LBN %lu for file: %s", lbn, filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    return OPERATION_SUCCESS;
+}
 
+int mapping::read_sstable(hostInfo request, char *buffer) {
+    std::string filename = request.filename;
+    if (mappingTable.count(filename) == 0) {
+        pr_info("ERROR: File %s not found in mapping table", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    if (!buffer) {
+        pr_info("ERROR: Null buffer provided to read file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    uint64_t lbn = mappingTable[filename];
+    int err = persistenceManager.disk.readBlock(lbn, (uint8_t *)buffer);
+    if (err == OPERATION_SUCCESS) {
+        pr_info("Read data from LBN %lu for file: %s successfully", lbn, filename.c_str());
+    } else {
+        pr_info("Failed to read block from LBN %lu for file: %s", lbn, filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    return OPERATION_SUCCESS;
+}
+
+int mapping::search_key(int key) {
+    if(key < 0){
+        return OPERATION_FAILURE;
+    }
+    std::queue<std::shared_ptr<TreeNode>> list = tree.search_key(key);
+    
 }

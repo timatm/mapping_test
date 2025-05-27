@@ -12,8 +12,6 @@
 #include <queue>
 
 #include "tree.hh"
-
-extern Tree *tree;
 #include "def.hh"
 #include "print.hh"
 class LBNPool {
@@ -31,14 +29,14 @@ public:
     void insert_usedLBNList(uint64_t lbn);
     bool remove_usedLBNList(uint64_t lbn);
     bool get_usedLBNList(uint64_t lbn);
-
+    std::array<int,CHANNEL_NUM> calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>>);
     template<typename T>
     uint64_t select_lbn(int,T);
     void print();
     uint64_t worst_policy();
     uint64_t RRpolicy();
     uint64_t level2CH(int level);
-    uint64_t best(std::queue<int>);
+    uint64_t my_policy(hostInfo info);
     enum{
         WROSTCASE = 0,
         RR        = 1,

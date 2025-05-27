@@ -140,9 +140,8 @@ TreeNode * Tree::find_node(std::string filename,TreeNode *cur){
 
 std::queue<std::shared_ptr<TreeNode>> Tree::search_key_range(int min,int max){
     std::queue<std::shared_ptr<TreeNode>> list;
-    std::queue<std::shared_ptr<TreeNode>> checkList; // 用來記錄需要檢查的節點
-    std::unordered_set<TreeNode*> visited; // 用來記錄已經訪問過的節點
-
+    std::queue<std::shared_ptr<TreeNode>> checkList;
+    std::unordered_set<TreeNode*> visited;
     checkList.push(root);
 
     while (!checkList.empty()) {
@@ -151,14 +150,12 @@ std::queue<std::shared_ptr<TreeNode>> Tree::search_key_range(int min,int max){
         if (!cur || visited.count(cur.get())) continue;
         visited.insert(cur.get());
 
-        // 檢查當前節點是否在範圍內
         if (cur->rangeMin <= max && cur->rangeMax >= min) {
             list.push(cur);
         }
 
-        // 將子節點加入檢查列表
         for (auto& [filename, child] : cur->children) {
-            if (child && min <= child->rangeMin && max >= child->rangeMax) {
+            if (child && child->rangeMin <= max && child->rangeMax >= min) {
                 checkList.push(child);
             }
         }

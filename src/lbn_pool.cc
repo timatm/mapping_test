@@ -6,6 +6,7 @@
 #include <queue>
 #include <cstdint>
 #include <iostream>
+#include <algorithm>
 
 // freeLBNList 操作
 void LBNPool::init_lbn_pool(){
@@ -154,21 +155,39 @@ uint64_t LBNPool::level2CH(int level){
 }
 
 
-uint64_t LBNPool::best(std::queue<int> CHpriority){
-    uint64_t lbn = INVALIDLBN;
-    int ch = 0;
-    while(CHpriority.size() != 0){
-        ch = CHpriority.front();
-        CHpriority.pop();
-        if(freeLBNList[ch].size() != 0){
-            lbn = pop_freeLBNList(ch);
-            insert_usedLBNList(lbn);
-            return lbn;
+
+
+std::array<int,CHANNEL_NUM> LBNPool::calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>> list) {
+    std::array<int, CHANNEL_NUM> usage = {};
+    while( !list.empty()) {
+        std::shared_ptr<TreeNode> node = list.front();
+        list.pop();
+        if (!node) continue;
+
+        int ch = node->channelInfo;
+        if (ch >= 0 && ch < CHANNEL_NUM) {
+            usage[ch]++;
+        } else {
+            pr_info("Invalid channel index: %d", ch);
         }
     }
-    pr_info("LBN pool(best) doesn't have free LBN");
+    return usage;
+}
+uint64_t LBNPool::my_policy(hostInfo info){
+    uint64_t lbn = INVALIDLBN;
+    std::queue<std::shared_ptr<TreeNode>> relateList = tree->search_key_range(info.rangeMin, info.rangeMax);
+    std::array<int, CHANNEL_NUM> usage = calculate_channel_usage(relateList);
+    auto min = std::min_element(usage.begin(), usage.end());
+    int ch = std::distance(usage.begin(), min);
+    if(freeLBNList[ch].size() != 0){
+        lbn = pop_freeLBNList(ch);
+        insert_usedLBNList(lbn);
+        pr_info("My policy selected LBN: %lu from channel: %d", lbn, ch);
+        return lbn;
+    }
     return INVALIDLBN;
 }
+
 template<typename T>
 uint64_t LBNPool::select_lbn(int type,T info){
     uint64_t lbn = 0;
@@ -183,8 +202,7 @@ uint64_t LBNPool::select_lbn(int type,T info){
             lbn = level2CH(info);
             break;
         case BEST:
-            
-            lbn = best(info);
+            lbn = my_policy(info);
             break;
         default:
             pr_info("The type of policy is invalid ,check your pass parameter");

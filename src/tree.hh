@@ -10,6 +10,7 @@
 #include <queue>
 #include "print.hh"
 #include "def.hh"
+extern Tree tree;
 
 struct TreeNode : public std::enable_shared_from_this<TreeNode>{
     std::string filename;
