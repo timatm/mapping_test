@@ -10,7 +10,6 @@
 #include <queue>
 #include "print.hh"
 #include "def.hh"
-extern Tree tree;
 
 struct TreeNode : public std::enable_shared_from_this<TreeNode>{
     std::string filename;
@@ -55,13 +54,14 @@ public:
 
     std::queue<std::shared_ptr<TreeNode>> search_key_range(int min,int max);
     std::queue<std::shared_ptr<TreeNode>> search_key(int key);
-    TreeNode * find_node(std::string filename,TreeNode *cur);
+    std::shared_ptr<TreeNode> find_node(std::string filename,std::shared_ptr<TreeNode> cur);
     std::vector<int> get_next_ch_list(hostInfo *);
-    void dumpGraph(const std::shared_ptr<TreeNode>& node,
+    void dumpGraph(const std::shared_ptr<TreeNode>& node, 
                int indent = 0,
                std::unordered_set<const TreeNode*>* visited = nullptr);
 };
 
 
+extern Tree tree;
 
 #endif

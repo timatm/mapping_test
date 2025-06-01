@@ -3,7 +3,7 @@
 
 #include "persistence.hh"
 #include "mapping_table.hh"
-mappingTablePerPage * persistence::readMappingTable(uint64_t lbn,uint8_t *buffer,size_t size) {
+mappingTablePerPage * Persistence::readMappingTable(uint64_t lbn,uint8_t *buffer,size_t size) {
     int err;
     if (buffer == nullptr) {
         std::cerr << "[ERROR] Memory allocation failed.\n";
@@ -21,7 +21,7 @@ mappingTablePerPage * persistence::readMappingTable(uint64_t lbn,uint8_t *buffer
     return mappingTable;
 }
 
-void persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& mappingTable) {
+void Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& mappingTable) {
     uint64_t lpn = 0;
     uint8_t *buffer = (uint8_t*)malloc(PAGE_SIZE);
     int err;
@@ -54,7 +54,7 @@ void persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& m
     free(buffer);
 }
 
-SStableFormat * persistence::readSStable(uint64_t lbn,uint8_t *buffer,size_t size){
+SStableFormat * Persistence::readSStable(uint64_t lbn,uint8_t *buffer,size_t size){
     int err;
     if (buffer == nullptr) {
         std::cerr << "[ERROR] Memory allocation failed.\n";
@@ -71,7 +71,7 @@ SStableFormat * persistence::readSStable(uint64_t lbn,uint8_t *buffer,size_t siz
     SStableFormat *sstable = (SStableFormat*)buffer;
     return sstable;
 }
-int persistence::writeSStable(uint64_t lbn,uint8_t *buffer,size_t size){
+int Persistence::writeSStable(uint64_t lbn,uint8_t *buffer,size_t size){
     int err;
     if (buffer == nullptr) {
         std::cerr << "[ERROR] Memory allocation failed.\n";
@@ -88,7 +88,7 @@ int persistence::writeSStable(uint64_t lbn,uint8_t *buffer,size_t size){
     return OPERATION_SUCCESS;
 }
 
-pageFormat * persistence::readSStablePage(uint64_t lpn,uint8_t *buffer,size_t size){
+pageFormat * Persistence::readSStablePage(uint64_t lpn,uint8_t *buffer,size_t size){
     int err;
     if (buffer == nullptr) {
         std::cerr << "[ERROR] Memory allocation failed.\n";

@@ -18,6 +18,7 @@ class LBNPool {
 public:
     std::array<std::deque<uint64_t>, CHANNEL_NUM> usedLBNList;
     std::array<std::deque<uint64_t>, CHANNEL_NUM> freeLBNList;
+    std::queue<uint64_t> valueLogList;
     int lastUsedChannel;
 
     void init_lbn_pool();
@@ -29,13 +30,39 @@ public:
     void insert_usedLBNList(uint64_t lbn);
     bool remove_usedLBNList(uint64_t lbn);
     bool get_usedLBNList(uint64_t lbn);
+
+    void insert_valueLogList(uint64_t lbn);
+    void remove_valueLogList(uint64_t lbn);
+    uint64_t allocate_valueLog_block();
+
     std::array<int,CHANNEL_NUM> calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>>);
     template<typename T>
-    uint64_t select_lbn(int,T);
+    uint64_t select_lbn(int type,T info){
+        uint64_t lbn = 0;
+        switch(type){
+            case WROSTCASE:
+                lbn = worst_policy();
+                break;
+            case RR:
+                lbn = RRpolicy();
+                break;
+            case LEVEL2CH:
+                lbn = level2CH(info);
+                break;
+            case MYPOLICY:
+                lbn = my_policy(info);
+                break;
+            default:
+                pr_info("The type of policy is invalid ,check your pass parameter");
+                return INVALIDLBN;
+        }
+        
+        return lbn;
+    }
     void print();
     uint64_t worst_policy();
     uint64_t RRpolicy();
-    uint64_t level2CH(int level);
+    uint64_t level2CH(hostInfo info);
     uint64_t my_policy(hostInfo info);
     enum{
         WROSTCASE = 0,
@@ -45,6 +72,6 @@ public:
     };
 };
 
-
+extern LBNPool lbnPoolManager; 
 
 #endif

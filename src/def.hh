@@ -41,6 +41,8 @@
 #define LBN2PACKAGE(LBA)( (LBA >> (DIE_BITS + PLANE_BITS + BLOCK_BITS)) % PACKAGE_NUM )
 #define LBN2CH(LBA)     ( (LBA >> (PACKAGE_BITS + DIE_BITS + PLANE_BITS + BLOCK_BITS)) % CHANNEL_NUM )
 
+#define LBN2LPN(lbn) (lbn * PAGE_NUM) 
+
 #define OPERATION_SUCCESS 0
 #define OPERATION_FAILURE -1
 
@@ -86,7 +88,14 @@ struct mappingTablePerPage {
     }
 };
 #pragma pack(pop)
+static_assert(sizeof(mappingTablePerPage) == 16384, "MappingTablePage must be 16KB");
 
+
+struct valueLogInfo{
+    uint64_t lbn;
+    uint64_t page_offset;
+    uint8_t *buffer;
+};
 
 struct hostInfo
 {
@@ -105,7 +114,7 @@ struct hostInfo
         hostInfo(std::move(name), level, -1, min, max) {}
 };
 
-static_assert(sizeof(mappingTablePerPage) == 16384, "MappingTablePage must be 16KB");
+
 
 
 

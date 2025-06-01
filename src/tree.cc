@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-
+extern Tree tree;
 void Tree::insert_node(std::shared_ptr<TreeNode> node) {
     int err = 0;
 
@@ -126,13 +126,13 @@ std::queue<std::shared_ptr<TreeNode>> Tree::search_key(int key) {
 }
 
 
-TreeNode * Tree::find_node(std::string filename,TreeNode *cur){
+std::shared_ptr<TreeNode> Tree::find_node(std::string filename, std::shared_ptr<TreeNode> cur){
     if (!cur) return nullptr;
     if(cur->filename == filename) return cur;
-    for(auto & [name, upChild] : cur->children) {
-        TreeNode* child = upChild.get();
-        if (!child) continue;
-        TreeNode* found = find_node(filename, child);
+
+    for (auto& [name, upChild] : cur->children) {
+        if (!upChild) continue;
+        auto found = find_node(filename, upChild);
         if (found) return found;
     }
     return nullptr;

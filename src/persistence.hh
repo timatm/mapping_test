@@ -8,10 +8,9 @@
 #include <array>
 #include "def.hh"
 #include "disk.hh"
-class persistence {
+class Persistence {
 
 public:
-    Disk disk;
     void flushMappingTable(std::unordered_map<std::string, uint64_t>&);
     mappingTablePerPage * readMappingTable(uint64_t lbn,uint8_t *buffer,size_t size);
     SStableFormat * readSStable(uint64_t lbn,uint8_t *buffer,size_t size);
@@ -20,5 +19,5 @@ public:
     // TODO log(blob log) need to add 
 private:
 };
-
+extern Persistence persistenceManager;
 #endif // __PERSISTENCE_CC__

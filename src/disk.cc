@@ -138,9 +138,3 @@ int Disk::removeSStable(uint64_t lbn) {
     return ret;
 }
 
-
-
-uint64_t Disk::LBN2LPN(uint64_t lbn) {
-    uint64_t lpn = lbn * PAGE_NUM;
-    return lpn;
-}

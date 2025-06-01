@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "../src/lbn_pool.hh"
-
+#include "../src/tree.hh"
+Tree tree;
 TEST(LBN_pool, InsertAndGet) {
     LBNPool mapMgr;
     mapMgr.insert_usedLBNList(0);

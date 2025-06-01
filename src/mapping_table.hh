@@ -12,10 +12,11 @@
 #include "lbn_pool.hh"
 #include "persistence.hh"
 #include "tree.hh"
-class mapping{
+
+class Mapping{
+    LBNPool& lbnPoolManager;
 public:
-    LBNPool lbnPoolManager; 
-    persistence persistenceManager;
+    Mapping(LBNPool& p) : lbnPoolManager(p) {}
     std::unordered_map<std::string, uint64_t> mappingTable;
     void init_mapping_table();
 
@@ -27,9 +28,7 @@ public:
 
     void dump_mapping(mappingTablePerPage *page);
 
-    int write_sstable(hostInfo request,char *buffer);
-    int read_sstable(hostInfo request ,char *buffer);
-    int search_key(int key);
+    
 };
 
 #endif // __MAPPING_TABLE_HH__

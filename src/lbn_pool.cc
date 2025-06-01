@@ -88,6 +88,28 @@ bool LBNPool::get_usedLBNList(uint64_t lbn) {
     return false;
 }
 
+void LBNPool::insert_valueLogList(uint64_t lbn){
+    valueLogList.push(lbn);
+}
+
+
+void LBNPool::remove_valueLogList(uint64_t lbn){
+    valueLogList.pop();
+}
+
+
+// TODO allocate policy need to modify 
+uint64_t LBNPool::allocate_valueLog_block(){
+    uint64_t lbn = INVALIDLBN;
+    for (int ch = 0;ch < CHANNEL_NUM;ch++){
+        if (freeLBNList[ch].size() != 0){
+            lbn = pop_freeLBNList(ch);
+            insert_usedLBNList(lbn);
+            return lbn;
+        }
+    }
+    return INVALIDLBN;
+}
 // 附加：debug print
 void LBNPool::print() {
     pr_info("===== LBN Pool =====");
@@ -137,7 +159,8 @@ uint64_t LBNPool::RRpolicy(){
 
 }
 
-uint64_t LBNPool::level2CH(int level){
+uint64_t LBNPool::level2CH(hostInfo info){
+    int level = info.levelInfo;
     uint64_t lbn = INVALIDLBN;
     if (level < 0 || level >= CHANNEL_NUM) {
         pr_info("Invalid level index: %d", level);
@@ -175,7 +198,7 @@ std::array<int,CHANNEL_NUM> LBNPool::calculate_channel_usage(std::queue<std::sha
 }
 uint64_t LBNPool::my_policy(hostInfo info){
     uint64_t lbn = INVALIDLBN;
-    std::queue<std::shared_ptr<TreeNode>> relateList = tree->search_key_range(info.rangeMin, info.rangeMax);
+    std::queue<std::shared_ptr<TreeNode>> relateList = tree.search_key_range(info.rangeMin, info.rangeMax);
     std::array<int, CHANNEL_NUM> usage = calculate_channel_usage(relateList);
     auto min = std::min_element(usage.begin(), usage.end());
     int ch = std::distance(usage.begin(), min);
@@ -188,25 +211,3 @@ uint64_t LBNPool::my_policy(hostInfo info){
     return INVALIDLBN;
 }
 
-template<typename T>
-uint64_t LBNPool::select_lbn(int type,T info){
-    uint64_t lbn = 0;
-    switch(type){
-        case WROSTCASE:
-            lbn = worst_policy();
-            break;
-        case RR:
-            lbn = RRpolicy();
-            break;
-        case LEVEL2CH:
-            lbn = level2CH(info);
-            break;
-        case BEST:
-            lbn = my_policy(info);
-            break;
-        default:
-            pr_info("The type of policy is invalid ,check your pass parameter");
-    }
-    
-    return lbn;
-}

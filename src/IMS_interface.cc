@@ -1,0 +1,104 @@
+#include "IMS_interface.hh"
+
+Tree tree;
+Mapping mappingManager(lbnPoolManager);
+int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
+    int err = -1;
+    std::string filename = request.filename;
+    int level = request.levelInfo;
+    int rangeMin = request.rangeMin;
+    int rangeMax = request.rangeMax;
+    // Check if the file already exists in the mapping table
+    if (mappingManager.mappingTable.count(filename)) {
+        pr_info("ERROR: Mapping already exists, refusing to overwrite file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    if (!buffer) {
+        pr_info("ERROR: Null buffer provided for write to file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    uint64_t lbn = lbnPoolManager.select_lbn(DISPATCH_POLICY,request);
+    if (lbn == INVALIDLBN) {
+        pr_info("Failed to allocate LBN for file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    pr_info("Allocated LBN %lu for file: %s", lbn, filename.c_str());
+    err = disk.writeBlock(lbn, (uint8_t *)buffer);
+    pr_info("Wrote data to LBN %lu for file: %s", lbn, filename.c_str());
+    if(err == OPERATION_SUCCESS){
+        pr_info("Write block to LBN %lu for file: %s successfully", lbn, filename.c_str());
+        mappingManager.insert_mapping(filename, lbn);
+        std::shared_ptr<TreeNode> node = std::make_shared<TreeNode>(filename, level, -1, rangeMin, rangeMax);
+        node->channelInfo = LBN2CH(lbn);
+        tree.insert_node(node);
+        pr_info("Inserted node for file: %s at level %d, channel %d, range [%d, %d]", 
+        filename.c_str(), level, node->channelInfo, rangeMin, rangeMax);
+    } else {
+        pr_info("Failed to write block to LBN %lu for file: %s", lbn, filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    return OPERATION_SUCCESS;
+}
+
+int IMS_interface::read_sstable(hostInfo request, uint8_t *buffer) {
+    std::string filename = request.filename;
+    if (mappingManager.mappingTable.count(filename) == 0) {
+        pr_info("ERROR: File %s not found in mapping table", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    if (!buffer) {
+        pr_info("ERROR: Null buffer provided to read file: %s", filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    uint64_t lbn = mappingManager.mappingTable[filename];
+    int err = disk.readBlock(lbn, (uint8_t *)buffer);
+    if (err == OPERATION_SUCCESS) {
+        pr_info("Read data from LBN %lu for file: %s successfully", lbn, filename.c_str());
+    } else {
+        pr_info("Failed to read block from LBN %lu for file: %s", lbn, filename.c_str());
+        return OPERATION_FAILURE;
+    }
+    return OPERATION_SUCCESS;
+}
+
+int IMS_interface::search_key(int key) {
+    if(key < 0){
+        return OPERATION_FAILURE;
+    }
+    std::queue<std::shared_ptr<TreeNode>> list = tree.search_key(key);
+    
+}
+
+
+// TODO now is not complete still need to finish  
+int IMS_interface::allocate_block(hostInfo request){
+    uint64_t lbn;
+    lbn = lbnPoolManager.allocate_valueLog_block();
+    if(lbn == INVALIDLBN){
+        pr_info("Allocate value log block is failed, need to check policy or free block list");
+        return OPERATION_FAILURE;
+    }
+
+    return OPERATION_SUCCESS;
+}
+
+
+// TODO now not complete still need to modify
+int IMS_interface::write_log(valueLogInfo request,uint8_t *buffer){
+    int err = OPERATION_FAILURE;
+    uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
+    err = disk.write(lpn,buffer);
+    if( err != OPERATION_SUCCESS){
+        pr_info("Write value log is fail");
+    }
+    return err;
+}
+int IMS_interface::read_log(valueLogInfo request,uint8_t *buffer){
+    int err = OPERATION_FAILURE;
+    uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
+    err = disk.read(lpn,buffer);
+    if( err != OPERATION_SUCCESS){
+        pr_info("Write value log is fail");
+    }
+    return err;
+}
