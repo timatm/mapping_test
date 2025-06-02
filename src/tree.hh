@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 
 #include <queue>
 #include "print.hh"
@@ -41,14 +42,20 @@ struct TreeNode : public std::enable_shared_from_this<TreeNode>{
     TreeNode(std::string name, int level,int min, int max):
         TreeNode(std::move(name), level,-1, min,max){}
 };
-
+struct TreeNodeComparator {
+    bool operator()(const std::shared_ptr<TreeNode>& a,
+                    const std::shared_ptr<TreeNode>& b) const {
+        if (a->rangeMin != b->rangeMin)
+            return a->rangeMin < b->rangeMin;
+        if (a->rangeMax != b->rangeMax)
+            return a->rangeMax < b->rangeMax;
+        return a.get() < b.get();  // 保證即使 range 一樣也不會視為重複
+    }
+};
 class Tree {
 public: 
-    std::shared_ptr<TreeNode> root;           
-
-    Tree() :
-        root(std::make_shared<TreeNode>("dummy_root", 0, -1, 0,100)) {}
-
+    std::unordered_map<int, std::set<std::shared_ptr<TreeNode>, TreeNodeComparator>> level_map;
+    bool detect_overlap(int level, int rangeMin, int rangeMax);
     void insert_node(std::shared_ptr<TreeNode> node);
     void remove_node(std::shared_ptr<TreeNode> node);
 

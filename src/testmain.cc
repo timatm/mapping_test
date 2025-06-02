@@ -124,13 +124,21 @@ void loadTestFile(const std::string& filename,
         else if (cmd == "children") {
             std::string name;
             iss >> name;
-            auto it = nodeMap.find(name);
-            if (it != nodeMap.end()) {
-                std::cout << "🧭 Subtree of: " << name << "\n";
-                print_all_children(it->second);
-            } else {
-                std::cerr << "⚠️  Node not found: " << name << "\n";
+            if (name == "root") {
+                std::cout << "🧭 Subtree of: root\n";
+                print_all_children(tree.root);
+                continue;
             }
+            else{
+                auto it = nodeMap.find(name);
+                if (it != nodeMap.end()) {
+                    std::cout << "🧭 Subtree of: " << name << "\n";
+                    print_all_children(it->second);
+                } else {
+                    std::cerr << "⚠️  Node not found: " << name << "\n";
+                }
+            }
+            
         }
         else if (cmd == "search") {
             int key = -1;
