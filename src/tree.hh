@@ -32,6 +32,7 @@ struct TreeNode : public std::enable_shared_from_this<TreeNode>{
     int rangeMin;
     int rangeMax;
     std::unordered_map<std::string, std::shared_ptr<TreeNode> > children;
+    // Weak_ptr cna't be used in unordered_map, so we use vetor to contain parent nodes
     std::vector<std::weak_ptr<TreeNode>> parent;
     TreeNode(std::string name, int level,int ch,int min, int max):
         filename(std::move(name)),
@@ -41,6 +42,10 @@ struct TreeNode : public std::enable_shared_from_this<TreeNode>{
         rangeMax(max){}
     TreeNode(std::string name, int level,int min, int max):
         TreeNode(std::move(name), level,-1, min,max){}
+
+    ~TreeNode() {
+        // std::cout << "TreeNode " << filename << " is destroyed\n";
+    }
 };
 struct TreeNodeComparator {
     bool operator()(const std::shared_ptr<TreeNode>& a,
@@ -55,17 +60,17 @@ struct TreeNodeComparator {
 class Tree {
 public: 
     std::unordered_map<int, std::set<std::shared_ptr<TreeNode>, TreeNodeComparator>> level_map;
-    bool detect_overlap(int level, int rangeMin, int rangeMax);
     void insert_node(std::shared_ptr<TreeNode> node);
     void remove_node(std::shared_ptr<TreeNode> node);
 
-    std::queue<std::shared_ptr<TreeNode>> search_key_range(int min,int max);
+
+    std::vector<std::shared_ptr<TreeNode>> search_overlap(int level, int queryMin, int queryMax);
+    void build_link(std::shared_ptr<TreeNode> node);
+
     std::queue<std::shared_ptr<TreeNode>> search_key(int key);
-    std::shared_ptr<TreeNode> find_node(std::string filename,std::shared_ptr<TreeNode> cur);
-    std::vector<int> get_next_ch_list(hostInfo *);
-    void dumpGraph(const std::shared_ptr<TreeNode>& node, 
-               int indent = 0,
-               std::unordered_set<const TreeNode*>* visited = nullptr);
+    std::shared_ptr<TreeNode> find_node(std::string filename,int level,int ,int);
+    std::shared_ptr<TreeNode> find_node(std::string filename);
+    std::vector<int> get_relate_ch_info(std::shared_ptr<TreeNode> node);
 };
 
 

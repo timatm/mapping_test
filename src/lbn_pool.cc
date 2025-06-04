@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <iostream>
 #include <algorithm>
-
+#include <numeric>  
 // freeLBNList 操作
 void LBNPool::init_lbn_pool(){
     for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
@@ -180,34 +180,77 @@ uint64_t LBNPool::level2CH(hostInfo info){
 
 
 
-std::array<int,CHANNEL_NUM> LBNPool::calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>> list) {
-    std::array<int, CHANNEL_NUM> usage = {};
-    while( !list.empty()) {
-        std::shared_ptr<TreeNode> node = list.front();
-        list.pop();
-        if (!node) continue;
+// std::array<int,CHANNEL_NUM> LBNPool::calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>> list) {
+//     std::array<int, CHANNEL_NUM> usage = {};
+//     while( !list.empty()) {
+//         std::shared_ptr<TreeNode> node = list.front();
+//         list.pop();
+//         if (!node) continue;
 
-        int ch = node->channelInfo;
-        if (ch >= 0 && ch < CHANNEL_NUM) {
-            usage[ch]++;
-        } else {
-            pr_info("Invalid channel index: %d", ch);
+//         int ch = node->channelInfo;
+//         if (ch >= 0 && ch < CHANNEL_NUM) {
+//             usage[ch]++;
+//         } else {
+//             pr_info("Invalid channel index: %d", ch);
+//         }
+//     }
+//     return usage;
+// }
+
+uint64_t LBNPool::my_policy(hostInfo info) {
+    uint64_t lbn = INVALIDLBN;
+    std::shared_ptr<TreeNode> newNode = std::make_shared<TreeNode>(info.filename, info.levelInfo, info.rangeMin, info.rangeMax);
+    tree.insert_node(newNode);
+    std::shared_ptr<TreeNode> node = tree.find_node(info.filename, info.levelInfo, info.rangeMin, info.rangeMax);
+    
+    if (!node) {
+        pr_info("Node not found for filename: %s", info.filename.c_str());
+        return INVALIDLBN;
+    }
+
+    std::vector<int> relateList = tree.get_relate_ch_info(node);
+    if (relateList.empty()) {
+        pr_info("Related channel list is empty");
+        return INVALIDLBN;
+    }
+
+    std::vector<int> indices(relateList.size());
+    std::iota(indices.begin(),indices.end(),0);
+    std::sort(indices.begin(),indices.end(),[&](int a ,int b){
+        return relateList[a] < relateList[b];
+    });
+
+    for(int ch:indices){
+        if (!freeLBNList[ch].empty()) { 
+            lbn = pop_freeLBNList(ch);
+            insert_usedLBNList(lbn);
+            pr_info("My policy selected LBN: %lu from channel: %d", lbn, ch);
+            return lbn;
         }
     }
-    return usage;
-}
-uint64_t LBNPool::my_policy(hostInfo info){
-    uint64_t lbn = INVALIDLBN;
-    std::queue<std::shared_ptr<TreeNode>> relateList = tree.search_key_range(info.rangeMin, info.rangeMax);
-    std::array<int, CHANNEL_NUM> usage = calculate_channel_usage(relateList);
-    auto min = std::min_element(usage.begin(), usage.end());
-    int ch = std::distance(usage.begin(), min);
-    if(freeLBNList[ch].size() != 0){
-        lbn = pop_freeLBNList(ch);
-        insert_usedLBNList(lbn);
-        pr_info("My policy selected LBN: %lu from channel: %d", lbn, ch);
-        return lbn;
-    }
+
     return INVALIDLBN;
 }
 
+uint64_t LBNPool::select_lbn(int type,hostInfo info){
+    uint64_t lbn = 0;
+    switch(type){
+        case WROSTCASE:
+            lbn = worst_policy();
+            break;
+        case RR:
+            lbn = RRpolicy();
+            break;
+        case LEVEL2CH:
+            lbn = level2CH(info);
+            break;
+        case MYPOLICY:
+            lbn = my_policy(info);
+            break;
+        default:
+            pr_info("The type of policy is invalid ,check your pass parameter");
+            return INVALIDLBN;
+    }
+    
+    return lbn;
+}

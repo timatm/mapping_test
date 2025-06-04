@@ -49,6 +49,10 @@
 #define DISPATCH_POLICY 3 // 0: worst case, 1: RR, 2: level2CH, 3: my_policy
 
 
+#define ENABLE_DISK 0
+
+#define MAX_LEVEL 7
+
 
 #define INVALIDLBN 0xFFFFFFFFFFFFFFFF
 #include <cstdint>

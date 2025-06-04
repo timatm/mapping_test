@@ -2,8 +2,9 @@
 
 Tree tree;
 Mapping mappingManager(lbnPoolManager);
+
 int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
-    int err = -1;
+    int err = OPERATION_FAILURE;
     std::string filename = request.filename;
     int level = request.levelInfo;
     int rangeMin = request.rangeMin;
@@ -23,7 +24,7 @@ int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
         return OPERATION_FAILURE;
     }
     pr_info("Allocated LBN %lu for file: %s", lbn, filename.c_str());
-    err = disk.writeBlock(lbn, (uint8_t *)buffer);
+    err = persistenceManager.writeSStable(lbn, (uint8_t *)buffer, BLOCK_SIZE);
     pr_info("Wrote data to LBN %lu for file: %s", lbn, filename.c_str());
     if(err == OPERATION_SUCCESS){
         pr_info("Write block to LBN %lu for file: %s successfully", lbn, filename.c_str());
@@ -51,7 +52,8 @@ int IMS_interface::read_sstable(hostInfo request, uint8_t *buffer) {
         return OPERATION_FAILURE;
     }
     uint64_t lbn = mappingManager.mappingTable[filename];
-    int err = disk.readBlock(lbn, (uint8_t *)buffer);
+    int err =  persistenceManager.readSStable(lbn, (uint8_t *)buffer, BLOCK_SIZE);
+
     if (err == OPERATION_SUCCESS) {
         pr_info("Read data from LBN %lu for file: %s successfully", lbn, filename.c_str());
     } else {
@@ -65,12 +67,13 @@ int IMS_interface::search_key(int key) {
     if(key < 0){
         return OPERATION_FAILURE;
     }
+    // The queue is sorted from low to high level.
     std::queue<std::shared_ptr<TreeNode>> list = tree.search_key(key);
-    
 }
 
 
 // TODO now is not complete still need to finish  
+// This function is used to allocate a block for value log
 int IMS_interface::allocate_block(hostInfo request){
     uint64_t lbn;
     lbn = lbnPoolManager.allocate_valueLog_block();

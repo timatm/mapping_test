@@ -36,29 +36,7 @@ public:
     uint64_t allocate_valueLog_block();
 
     std::array<int,CHANNEL_NUM> calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>>);
-    template<typename T>
-    uint64_t select_lbn(int type,T info){
-        uint64_t lbn = 0;
-        switch(type){
-            case WROSTCASE:
-                lbn = worst_policy();
-                break;
-            case RR:
-                lbn = RRpolicy();
-                break;
-            case LEVEL2CH:
-                lbn = level2CH(info);
-                break;
-            case MYPOLICY:
-                lbn = my_policy(info);
-                break;
-            default:
-                pr_info("The type of policy is invalid ,check your pass parameter");
-                return INVALIDLBN;
-        }
-        
-        return lbn;
-    }
+    uint64_t select_lbn(int type,hostInfo info);
     void print();
     uint64_t worst_policy();
     uint64_t RRpolicy();
