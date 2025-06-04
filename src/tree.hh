@@ -41,7 +41,7 @@ struct TreeNode : public std::enable_shared_from_this<TreeNode>{
         rangeMin(min),
         rangeMax(max){}
     TreeNode(std::string name, int level,int min, int max):
-        TreeNode(std::move(name), level,-1, min,max){}
+        TreeNode(std::move(name), level,INVALIDCH, min,max){}
 
     ~TreeNode() {
         // std::cout << "TreeNode " << filename << " is destroyed\n";

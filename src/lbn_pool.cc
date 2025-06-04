@@ -166,7 +166,7 @@ uint64_t LBNPool::level2CH(hostInfo info){
         pr_info("Invalid level index: %d", level);
         return INVALIDLBN;
     }
-    if(freeLBNList[level].size() != 0){
+    if(!freeLBNList[level].empty()){
         lbn = pop_freeLBNList(level);
         insert_usedLBNList(lbn);
         return lbn;
@@ -199,7 +199,7 @@ uint64_t LBNPool::level2CH(hostInfo info){
 
 uint64_t LBNPool::my_policy(hostInfo info) {
     uint64_t lbn = INVALIDLBN;
-    std::shared_ptr<TreeNode> newNode = std::make_shared<TreeNode>(info.filename, info.levelInfo, info.rangeMin, info.rangeMax);
+    std::shared_ptr<TreeNode> newNode = std::make_shared<TreeNode>(info.filename, info.levelInfo,info.rangeMin, info.rangeMax);
     tree.insert_node(newNode);
     std::shared_ptr<TreeNode> node = tree.find_node(info.filename, info.levelInfo, info.rangeMin, info.rangeMax);
     

@@ -176,6 +176,7 @@ std::vector<int> Tree::get_relate_ch_info(std::shared_ptr<TreeNode> node) {
         if (!Pvisited.insert(parent.get()).second) continue;
 
         if (parent->channelInfo != -1) {
+            // std::cout << "filename :"<< parent->filename << std::endl;
             relate_ch_info[parent->channelInfo]++;
         }
         for (auto& p : parent->parent) {
@@ -204,13 +205,13 @@ std::vector<int> Tree::get_relate_ch_info(std::shared_ptr<TreeNode> node) {
     
     auto& nodes = level_map[node->levelInfo];
     auto it = nodes.find(node);
-    auto next = std::next(it);
-    auto prev = std::prev(it);
-    if(next != nodes.end()){
-        relate_ch_info[(*next)->levelInfo]++;
+    if(it != nodes.begin()){
+        auto prev = std::prev(it);
+        relate_ch_info[(*prev)->channelInfo]++;
     }
-    if(prev != nodes.begin()){
-        relate_ch_info[(*prev)->levelInfo]++;
+    if(it != nodes.end()){
+        auto next = std::next(it);
+        relate_ch_info[(*next)->channelInfo]++;
     }
     return relate_ch_info;
 }

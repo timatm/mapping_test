@@ -55,6 +55,8 @@
 
 
 #define INVALIDLBN 0xFFFFFFFFFFFFFFFF
+#define INVALIDCH  0xFF
+
 #include <cstdint>
 #include <cstring>
 
@@ -78,6 +80,7 @@ struct mappingTablePerPage {
         uint8_t header[sizeof(mappingEntry)];
          // 完整 raw data
         struct {
+            // Record the next page is stored mappingTable
             uint8_t nextPage;       // 1 byte
             uint8_t entry_num;     // 1 bytes
             uint8_t reserved1[62];   // 61 bytes
