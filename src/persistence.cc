@@ -38,7 +38,7 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
     for (const auto& pair : mappingTable) {
         if (idx == MAPPING_TABLE_ENTRIES){
             page->entry_num = idx;
-            page->nextPage = 1;
+            page->nextPage = 1; // TODO need to check
             err = disk.write(lpn, buffer);
             memset(buffer, 0xFF, PAGE_SIZE);
             lpn++;
@@ -46,6 +46,7 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
         }
         mappingEntry &entry = page->entry[idx++];
         strncpy(entry.fileName, pair.first.c_str(), sizeof(entry.fileName) - 1);
+        entry.fileName[sizeof(entry.fileName) - 1] = '\0';
         entry.lbn = pair.second;
     }
     if(idx > 0) {

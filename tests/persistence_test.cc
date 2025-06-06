@@ -2,6 +2,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <string>
+#include <list>
 
 #include "../src/persistence.hh"
 #include "../src/mapping_table.hh"
@@ -36,7 +37,9 @@ TEST_F(PersistenceTest, ReadWriteSStableBlock) {
     fill_buffer(write_buf, 0xA5, BLOCK_SIZE);
 
     ASSERT_EQ(persistence.flushSStable(2, write_buf, BLOCK_SIZE), OPERATION_SUCCESS);
+    
     ASSERT_EQ(persistence.readSStable(2, read_buf, BLOCK_SIZE), OPERATION_SUCCESS);
+    
     ASSERT_EQ(memcmp(write_buf, read_buf, BLOCK_SIZE), 0);
 }
 
@@ -48,9 +51,17 @@ TEST_F(PersistenceTest, ReadWriteSStablePage) {
     
     uint8_t expect[PAGE_SIZE];
     fill_buffer(expect, 0x3C, PAGE_SIZE);
+    uint64_t lbn = 3;
 
-    ASSERT_EQ(persistence.flushSStable(3, write_buf, BLOCK_SIZE), 0);
-    ASSERT_EQ(persistence.readSStablePage(3, read_buf, PAGE_SIZE), OPERATION_SUCCESS);
+    uint64_t offset = 10;
+    uint64_t lpn = LBN2LPN(lbn) + offset;
+    
+    ASSERT_EQ(persistence.flushSStable(lbn, write_buf, BLOCK_SIZE), 0);
+    ASSERT_EQ(persistence.readSStablePage(lpn, read_buf, PAGE_SIZE), OPERATION_SUCCESS);
+    ASSERT_EQ(memcmp(expect, read_buf, PAGE_SIZE), 0);
+    ASSERT_EQ(persistence.readSStablePage(lpn-1, read_buf, PAGE_SIZE), OPERATION_SUCCESS);
+    ASSERT_EQ(memcmp(expect, read_buf, PAGE_SIZE), 0);
+    ASSERT_EQ(persistence.readSStablePage(lpn+1, read_buf, PAGE_SIZE), OPERATION_SUCCESS);
     ASSERT_EQ(memcmp(expect, read_buf, PAGE_SIZE), 0);
 }
 
@@ -66,4 +77,23 @@ TEST_F(PersistenceTest, ReadWriteMappingTable) {
 
     uint8_t buffer[PAGE_SIZE];
     ASSERT_EQ(persistence.readMappingTable(0, buffer, PAGE_SIZE), OPERATION_SUCCESS);
+
+    mappingTablePerPage* mapping = (mappingTablePerPage*)buffer;
+    std::list<std::pair<std::string,uint64_t>> test;
+    for(int i = 0;i < mapping->entry_num;i++){
+        test.push_back( {mapping->entry[i].fileName,mapping->entry[i].lbn} );
+        std::cout << mapping->entry[i].fileName  << "   "<< mapping->entry[i].lbn << std::endl;
+    }
+    std::pair<std::string,uint64_t> expect1("file1.sst", 10);
+    std::pair<std::string,uint64_t> expect2("file2.sst", 11);
+    std::pair<std::string,uint64_t> expect3("file3.sst", 12);   
+    
+    auto it = std::find(test.begin(),test.end(),expect1);
+    EXPECT_NE(it,test.end());
+
+    it = std::find(test.begin(),test.end(),expect2);
+    EXPECT_NE(it,test.end());
+
+    it = std::find(test.begin(),test.end(),expect3);
+    EXPECT_NE(it,test.end());
 }

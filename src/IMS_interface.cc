@@ -36,6 +36,7 @@ int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
     err = persistenceManager.flushSStable(lbn, (uint8_t *)buffer, BLOCK_SIZE);
     pr_info("Wrote data to LBN %lu for file: %s", lbn, filename.c_str());
 
+    // The SStable flush to SSD is success,record the SStable store in which channel and update mappingtable
     if(err == OPERATION_SUCCESS){
         pr_info("Write block to LBN %lu for file: %s successfully", lbn, filename.c_str());
         node->channelInfo = LBN2CH(lbn);
@@ -105,6 +106,7 @@ int IMS_interface::write_log(valueLogInfo request,uint8_t *buffer){
     }
     return err;
 }
+
 int IMS_interface::read_log(valueLogInfo request,uint8_t *buffer){
     int err = OPERATION_FAILURE;
     uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;

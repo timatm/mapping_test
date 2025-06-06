@@ -177,26 +177,6 @@ uint64_t LBNPool::level2CH(hostInfo info){
     return INVALIDLBN;
 }
 
-
-
-
-// std::array<int,CHANNEL_NUM> LBNPool::calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>> list) {
-//     std::array<int, CHANNEL_NUM> usage = {};
-//     while( !list.empty()) {
-//         std::shared_ptr<TreeNode> node = list.front();
-//         list.pop();
-//         if (!node) continue;
-
-//         int ch = node->channelInfo;
-//         if (ch >= 0 && ch < CHANNEL_NUM) {
-//             usage[ch]++;
-//         } else {
-//             pr_info("Invalid channel index: %d", ch);
-//         }
-//     }
-//     return usage;
-// }
-
 uint64_t LBNPool::my_policy(hostInfo info) {
     uint64_t lbn = INVALIDLBN;
     std::shared_ptr<TreeNode> newNode = std::make_shared<TreeNode>(info.filename, info.levelInfo,info.rangeMin, info.rangeMax);

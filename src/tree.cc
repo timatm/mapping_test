@@ -119,10 +119,13 @@ std::queue<std::shared_ptr<TreeNode>> Tree::search_key(int key) {
     std::queue<std::shared_ptr<TreeNode>> result;
     std::shared_ptr<TreeNode> dummy = std::make_shared<TreeNode>("dummy", 0, key, key);
 
-    for (const auto& [level, nodes] : level_map) {
+
+    for(int i = 0;i < MAX_LEVEL;i++){
+        auto nodes = level_map[i];
         auto it = nodes.upper_bound(dummy);
         if (it != nodes.begin()) {
             --it;
+            std::cout << "Check node " << (*it)->filename  << " in level:" << (*it)->levelInfo << std::endl;
             if ((*it)->rangeMin <= key && (*it)->rangeMax >= key) {
                 result.push(*it);
             }

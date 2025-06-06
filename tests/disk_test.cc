@@ -44,7 +44,7 @@ TEST_F(DiskTest, WriteAndReadBlock) {
     uint8_t read_buf[PAGE_SIZE * PAGE_NUM];
     memset(block_buf, 0xCD, PAGE_SIZE * PAGE_NUM);
 
-    uint64_t lbn = 1;
+    uint64_t lbn = 3;
     ASSERT_EQ(disk.writeBlock(lbn, block_buf), 0);
     ASSERT_EQ(disk.readBlock(lbn, read_buf), 0);
     ASSERT_EQ(memcmp(block_buf, read_buf, PAGE_SIZE * PAGE_NUM), 0);

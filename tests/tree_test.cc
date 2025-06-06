@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "../src/tree.hh"
+#include <list>
+#include <array>
 
 
 void dump_all_children(const std::shared_ptr<TreeNode>& node ,std::ostream& out) {
@@ -53,6 +55,7 @@ void execute_tree_test(Tree& tree, const std::string& commands, std::ostream& ou
             linestream >> key;
             auto res = tree.search_key(key);
             while (!res.empty()) {
+                std::cout << res.front()->filename <<  std::endl;
                 out << res.front()->filename << " ";
                 res.pop();
             }
@@ -264,6 +267,49 @@ TEST(TreeTest, TreeTest3) {
     )";
     execute_tree_test(tree, input, output);
     reset_string(output);
-    execute_tree_test(tree, "search 38", output);
-    EXPECT_TRUE(output.str().find("B G M") == std::string::npos);
+    auto result = tree.search_key(38);
+    std::array<std::string,3> expect = {"B","G","M"};
+    int i = 0;
+    while(!result.empty()){
+        std::shared_ptr<TreeNode> node = result.front();
+        result.pop();
+        EXPECT_EQ(node->filename,expect[i]);
+        i++;
+    }
+}
+
+
+TEST(TreeTest, TreeSearchTest) {
+    Tree tree;
+    std::ostringstream output;
+
+    std::string input = 
+    R"(
+    insert A 1 1 20
+    insert B 1 25 40
+    insert C 1 55 70
+    insert D 1 79 99
+    insert E 2 2 15
+    insert F 2 17 27
+    insert G 2 28 39
+    insert H 2 40 55
+    insert I 2 60 80
+    insert J 3 1 3
+    insert K 3 4 10
+    insert L 3 11 20
+    insert M 3 22 40
+    insert N 3 41 50
+    insert O 3 51 70
+    )";
+    execute_tree_test(tree, input, output);
+    std::queue<std::shared_ptr<TreeNode>> result = tree.search_key(20);
+    std::cout << "Size:" << result.size() << std::endl;
+
+    std::array<std::string,3> expect = {"A","F","L"};
+    int count = result.size();
+    for(int i = 0;i < count;i++){
+        std::shared_ptr<TreeNode> node = result.front();
+        result.pop();
+        EXPECT_EQ(node->filename,expect[i]);
+    }
 }
