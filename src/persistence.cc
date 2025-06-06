@@ -73,7 +73,7 @@ int  Persistence::readSStable(uint64_t lbn,uint8_t *buffer,size_t size){
     }
     return OPERATION_SUCCESS;
 }
-int Persistence::writeSStable(uint64_t lbn,uint8_t *buffer,size_t size){
+int Persistence::flushSStable(uint64_t lbn,uint8_t *buffer,size_t size){
     int err;
     if(!ENABLE_DISK){
         return OPERATION_SUCCESS;
@@ -99,7 +99,7 @@ int Persistence::readSStablePage(uint64_t lpn,uint8_t *buffer,size_t size){
         std::cerr << "[ERROR] Memory allocation failed.\n";
         return OPERATION_FAILURE;
     }
-    if (size != BLOCK_SIZE){
+    if (size != PAGE_SIZE){
         pr_debug("[ERROR] Memory allocation failed.");
         return OPERATION_FAILURE;
     }

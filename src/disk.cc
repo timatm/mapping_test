@@ -69,8 +69,9 @@ int Disk::writeBlock(uint64_t lbn ,uint8_t *buffer) {
     uint64_t lpn = LBN2LPN(lbn);
     if (file) {
         for(int i = 0;i < PAGE_NUM;i++){
-            uint8_t *page_ptr = buffer + i * PAGE_NUM;
-            lpn = lpn + i;
+            uint8_t *page_ptr = buffer + i * PAGE_SIZE;
+            lpn = lpn + 1;
+            // pr_debug("Write block at page: %d LPN: %lu", i, lpn);
             uint16_t written = write(lpn, page_ptr);
             if (written != 0) {
                 pr_info("[ERROR] write block failed at page: %d LPN: %lu", i, lpn);
@@ -88,7 +89,7 @@ int Disk::readBlock(uint64_t lbn ,uint8_t *buffer) {
     if (file) {
         for (int i = 0; i < PAGE_NUM; i++) {
         lpn = lpn +1;
-
+        // pr_debug("Read block at page: %d LPN: %lu", i, lpn);
         uint8_t *page_ptr = buffer + i * PAGE_SIZE;
 
         int read_result = read(lpn, page_ptr);
@@ -104,37 +105,4 @@ int Disk::readBlock(uint64_t lbn ,uint8_t *buffer) {
 }
 
 
-int Disk::removeSStable(uint64_t lbn) {
-    if (!file) {
-        std::cerr << "[ERROR] Disk not opened.\n";
-        return -1;
-    }
-
-    uint64_t lpn = LBN2LPN(lbn);
-    uint8_t* page_ptr = (uint8_t*)malloc(PAGE_SIZE);
-    if (!page_ptr) {
-        std::cerr << "[ERROR] Memory allocation failed.\n";
-        return -1;
-    }
-
-    // 填滿 0xFF
-    memset(page_ptr, 0xFF, PAGE_SIZE);
-
-    int ret = 0;
-    for (int i = 0; i < PAGE_NUM; i++) {
-        uint64_t target_lpn = lpn + i;
-        try {
-            write(target_lpn,page_ptr);
-            ret++;
-        } catch (const std::exception& e) {
-            std::cerr << "[ERROR] writeSStable failed at page: " << i 
-                      << " LPN: " << target_lpn 
-                      << " error: " << e.what() << std::endl;
-            break;
-        }
-    }
-
-    free(page_ptr);
-    return ret;
-}
 

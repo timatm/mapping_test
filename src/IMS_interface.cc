@@ -33,7 +33,7 @@ int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
         return OPERATION_FAILURE;
     }
     pr_info("Allocated LBN %lu for file: %s", lbn, filename.c_str());
-    err = persistenceManager.writeSStable(lbn, (uint8_t *)buffer, BLOCK_SIZE);
+    err = persistenceManager.flushSStable(lbn, (uint8_t *)buffer, BLOCK_SIZE);
     pr_info("Wrote data to LBN %lu for file: %s", lbn, filename.c_str());
 
     if(err == OPERATION_SUCCESS){
