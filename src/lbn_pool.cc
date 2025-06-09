@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <numeric>  
 // freeLBNList 操作
-void LBNPool::init_lbn_pool(){
+int LBNPool::init_lbn_pool(int expect_used_LBN_num){
+    int used_LBN_num = 0;
     for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
         while (!freeLBNList[ch].empty()) {
             freeLBNList[ch].pop_front();
@@ -20,7 +21,43 @@ void LBNPool::init_lbn_pool(){
             usedLBNList[ch].pop_front();
         }
     }
-    lastUsedChannel = CHANNEL_NUM-1;
+    for(auto [filename ,lbn] :mappingManager.mappingTable){
+        int channel = LBN2CH(lbn);
+        if (channel >= CHANNEL_NUM) {
+            pr_info("Invalid channel %lu for LBN %lu in mapping table", channel, lbn);
+            continue;
+        }
+        pr_info("MappingManager insert used LBN:%8lu to [CH]: %lu", lbn, channel);
+        usedLBNList[channel].push_back(lbn);
+        used_LBN_num++;
+    }
+
+    for(auto lbn:logManager.logRecordList){
+        int channel = LBN2CH(lbn);
+        if (channel >= CHANNEL_NUM) {
+            pr_info("Invalid channel %lu for LBN %lu in mapping table", channel, lbn);
+            continue;
+        }
+        pr_info("lbnManager insert used LBN:%8lu to [CH]: %lu", lbn, channel);
+        usedLBNList[channel].push_back(lbn);
+        used_LBN_num++;
+    }
+    for(uint64_t lbn = 0;lbn < LBN_NUM;lbn++){
+        if (lbnPoolManager.get_freeLBNList(lbn)) {
+            pr_info("LBN %lu is already in free list, skipping", lbn);
+            continue;
+        }
+        if (lbnPoolManager.get_usedLBNList(lbn)) {
+            pr_info("LBN %lu is already in used list, skipping", lbn);
+            continue;
+        }
+        insert_freeLBNList(lbn); // 將 LBN 插入到 freeLBNList 中
+    }
+    if(used_LBN_num == expect_used_LBN_num){
+        pr_info("LBN pool initialized successfully with %d used LBNs", expect_used_LBN_num);
+        return OPERATION_SUCCESS;
+    }
+    return OPERATION_FAILURE;
 }
 
 void LBNPool::insert_freeLBNList(uint64_t lbn) {

@@ -1,6 +1,9 @@
 #ifndef __DEF_HH__
 #define __DEF_HH__
 
+#include <cstdint>
+#include <cstring>
+// [SSD setting start]
 
 #define CHANNEL_NUM 4
 #define PACKAGE_NUM 4
@@ -46,67 +49,28 @@
 #define OPERATION_SUCCESS 0
 #define OPERATION_FAILURE -1
 
-#define DISPATCH_POLICY 3 // 0: worst case, 1: RR, 2: level2CH, 3: my_policy
-
-
 #define ENABLE_DISK 1
-
-#define MAX_LEVEL 7
-
 
 #define INVALIDLBN 0xFFFFFFFFFFFFFFFF
 #define INVALIDCH  0xFF
-
-#include <cstdint>
-#include <cstring>
-
-#define MAX_FILENAME_LENGTH 56
-
-struct mappingEntry {
-    char fileName[MAX_FILENAME_LENGTH];
-    uint64_t lbn;
-
-    mappingEntry() : lbn(0xFFFFFFFFFFFFFFFF) {
-        memset(fileName, 0, sizeof(fileName));
-    }
-};
-#define MAPPING_TABLE_ENTRIES ( (PAGE_SIZE / sizeof(mappingEntry))-1 ) // 16384 / 64(mapping entry) = 128 , 128 - 1(header) = 127
+// [SSD setting end]
 
 
-#pragma pack(push, 1)
-struct mappingTablePerPage {
-    
-    union {
-        uint8_t header[sizeof(mappingEntry)];
-         // 完整 raw data
-        struct {
-            // Record the next page is stored mappingTable
-            uint8_t nextPage;       // 1 byte
-            uint8_t entry_num;     // 1 bytes
-            uint8_t reserved1[62];   // 61 bytes
-        };
-    };
-    
-    mappingEntry entry[MAPPING_TABLE_ENTRIES]; 
-    uint8_t reserved2[PAGE_SIZE - (MAPPING_TABLE_ENTRIES * sizeof(mappingEntry)) - sizeof(header)]; // 填滿16KB
-
-    mappingTablePerPage() {
-        memset(this, 0xFF, sizeof(mappingTablePerPage));
-    }
-};
-#pragma pack(pop)
-static_assert(sizeof(mappingTablePerPage) == 16384, "MappingTablePage must be 16KB");
+// [IMS setting start]
+#define SUPER_BLOCK 0
+#define HAS_NEXT_PAGE 1
+#define NO_NEXT_PAGE  0
 
 
-struct valueLogInfo{
-    uint64_t lbn;
-    uint64_t page_offset;
-    uint8_t *buffer;
-};
+#define DISPATCH_POLICY 3 // 0: worst case, 1: RR, 2: level2CH, 3: my_policy
+#define MAX_LEVEL 7
+#define MAX_FILENAME_LENGTH 56 // SStable file name length
+#define MAGIC 0x900118FFFEEFFFEE
 
 struct hostInfo
 {
     int opcode;
+    uint64_t lbn;
     std::string filename;
     int levelInfo;
     int channelInfo;
@@ -122,9 +86,85 @@ struct hostInfo
         hostInfo(std::move(name), level, -1, min, max) {}
 };
 
+struct valueLogInfo{
+    uint64_t lbn;  // This log store in which LBN
+    uint64_t page_offset; // This log store in which LBN's LPN
+    uint8_t *buffer; //data buffer
+};
+
+#pragma pack(push, 1)
+struct super_page{
+    uint64_t magic; 
+    uint64_t mapping_store;
+    uint64_t mapping_page_num;
+    uint64_t log_store;     
+    uint64_t log_page_num;   
+    uint64_t currentLogLBN;    
+    uint64_t nextLogLBN;        
+    uint64_t logOffset;
+    uint64_t usedLBN_num;
+    uint8_t lastUsedChannel;
+
+    static constexpr size_t header_size =
+        sizeof(magic) +
+        sizeof(mapping_store) +
+        sizeof(mapping_page_num) +
+        sizeof(log_store) +
+        sizeof(log_page_num) +
+        sizeof(currentLogLBN) +
+        sizeof(nextLogLBN) +
+        sizeof(logOffset) +
+        sizeof(usedLBN_num) +
+        sizeof(lastUsedChannel);
+    uint8_t reserved[PAGE_SIZE - header_size];
+};
+static_assert(sizeof(super_page) == PAGE_SIZE, "super_page must be same to page size");
+#pragma pack(pop)
+// [IMS setting end]
+
+
+// [mapping table setting start]
+#pragma pack(push, 1)
+struct mappingEntry {
+    uint64_t lbn;
+    uint8_t level;
+    uint8_t channel;
+    uint32_t minRange;
+    uint32_t maxRange;
+    char fileName[64-sizeof(lbn) - sizeof(level) - sizeof(channel) - sizeof(minRange) - sizeof(maxRange)]; // 64 bytes total
+    mappingEntry() : lbn(0xFFFFFFFFFFFFFFFF) {
+        memset(fileName, 0, sizeof(fileName));
+    }
+};
+#define MAPPING_TABLE_ENTRIES ( (PAGE_SIZE / sizeof(mappingEntry))-1 ) // 16384 / 64(mapping entry) = 128 , 128 - 1(header) = 127
+
+struct mappingTablePerPage {
+    
+    union {
+        uint8_t header[sizeof(mappingEntry)];
+         // 完整 raw data
+        struct {
+            // Record the next page is stored mappingTable
+            uint8_t entry_num;     // 1 bytes
+            uint8_t reserved1[62];   // 61 bytes
+        };
+    };
+    
+    mappingEntry entry[MAPPING_TABLE_ENTRIES]; 
+    uint8_t reserved2[PAGE_SIZE - (MAPPING_TABLE_ENTRIES * sizeof(mappingEntry)) - sizeof(header)]; // 填滿16KB
+
+    mappingTablePerPage() {
+        memset(this, 0xFF, sizeof(mappingTablePerPage));
+    }
+};
+#pragma pack(pop)
+static_assert(sizeof(mappingTablePerPage) == 16384, "MappingTablePage must be 16KB");
+
+// [mapping table setting end]
 
 
 
+// [SStable setting start]
 
 #pragma pack(push, 1)
 
@@ -171,6 +211,22 @@ static_assert(sizeof(slotFormat) == 64, "slotFormat must be 64 bytes");
 static_assert(sizeof(pageFormat) == PAGE_SIZE ,"pageformat must be same to page size");
 static_assert(sizeof(SStableFormat) == BLOCK_SIZE ,"SStableFormat must be same to block size");
 #pragma pack(pop)
+
+// [SStable setting end]
+
+
+
+// [Log file setting]
+
+#define LOG_FILE_LBN 1
+
+#pragma pack(push, 1)
+struct logLBNListRecord {
+    uint64_t lbn[PAGE_SIZE / sizeof(uint64_t)]; // The LBN of the log record
+};
+static_assert(sizeof(logLBNListRecord) == PAGE_SIZE, "logLBNListRecord must be same to page size");
+#pragma pack(pop)
+// [Log file setting end]
 
 
 #endif // __DEF_HH__

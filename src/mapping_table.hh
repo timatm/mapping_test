@@ -18,17 +18,18 @@ class Mapping{
 public:
     Mapping(LBNPool& p) : lbnPoolManager(p) {}
     std::unordered_map<std::string, uint64_t> mappingTable;
-    void init_mapping_table();
+    int init_mapping_table(uint64_t mappingPageLBN,uint64_t page_num);
 
     void insert_mapping(const std::string& filename, uint64_t lbn);
 
     uint64_t getLBN(const std::string& filenam);
 
     void remove_mapping(const std::string& filename);
-
+    
     void dump_mapping(mappingTablePerPage *page);
 
+    int flush_mapping_table();
     
 };
-
+extern Mapping mappingManager;
 #endif // __MAPPING_TABLE_HH__

@@ -1,43 +1,46 @@
 #include "mapping_table.hh"
 #include <iomanip>
 #include <algorithm>
-LBNPool lbnPoolManager; 
-Persistence persistenceManager;
-Disk disk;
-extern Tree tree;
-void Mapping::init_mapping_table(){
-    uint64_t mappingPageLBN = MAPPINGLBN;
+
+int Mapping::init_mapping_table(uint64_t mappingPageLBN,uint64_t page_num){
+
+    if(mappingPageLBN == INVALIDLBN) {
+        pr_info("Invalid mapping page LBN, cannot initialize mapping table");
+        return OPERATION_FAILURE;
+    }
     size_t size = PAGE_SIZE;
-    uint8_t * buffer  = (uint8_t*)malloc(sizeof(uint8_t) * size);
-    mappingTablePerPage *mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN,buffer,size);
-    
-    while(mappingTablePtr->nextPage != 0) {
+    uint8_t *buffer  = (uint8_t*)malloc(size);
+    if (!buffer) {
+        pr_info("Failed to allocate buffer for mapping table");
+        return OPERATION_FAILURE;
+    }
+    uint64_t lpn = LBN2LPN(mappingPageLBN);
+    for(int page = 0;page < page_num;page++){
+        mappingTablePerPage *mappingTablePtr = 
+            (mappingTablePerPage *)persistenceManager.readMappingTable(lpn, buffer, size);
+
+        if (!mappingTablePtr) {
+            pr_info("Failed to read mapping table at LPN: %lu", lpn);
+            free(buffer);
+            return OPERATION_FAILURE;
+        }
+
         for (int i = 0; i < mappingTablePtr->entry_num; i++) {
             mappingEntry *entry = &mappingTablePtr->entry[i];
-            if (entry->lbn != 0xFFFFFFFFFFFFFFFF) {
-                std::string filename(entry->fileName);
-                uint64_t lbn = entry->lbn;
-                mappingTable[filename] = lbn;
+
+            // Recover mapping table and SStable tree info
+            if (entry->lbn != INVALIDLBN) {
+                mappingTable[std::string(entry->fileName)] = entry->lbn;
+                std::shared_ptr<TreeNode> node = std::make_shared<TreeNode>(entry->fileName,entry->level, entry->channel, entry->minRange, entry->maxRange);
+                tree.insert_node(node);
             }
         }
-        mappingPageLBN++;
-        mappingTablePtr = (mappingTablePerPage *)persistenceManager.readMappingTable(mappingPageLBN,buffer,size);
+        lpn++;
     }
-
-
-    for (const auto& [filename ,lbn] : mappingTable) {
-        int ch = LBN2CH(lbn);
-        lbnPoolManager.usedLBNList[ch].push_back(lbn);
-    }
-
-    for (uint64_t lbn = 0; lbn < LBN_NUM; lbn++) {
-        int ch = LBN2CH(lbn);
-        auto it = std::find(lbnPoolManager.usedLBNList[ch].begin(), lbnPoolManager.usedLBNList[ch].end(), lbn);
-        if (it != lbnPoolManager.usedLBNList[ch].end()) {
-            lbnPoolManager.freeLBNList[LBN2CH(lbn)].push_back(lbn);
-        }
-    }
+    free(buffer);
+    return OPERATION_SUCCESS;
 }
+
 
 void Mapping::insert_mapping(const std::string& filename, uint64_t lbn) {
     if (mappingTable.find(filename) != mappingTable.end()) {
@@ -78,3 +81,7 @@ void Mapping::dump_mapping(mappingTablePerPage *page) {
     pr_info("================================");
 }
 
+
+int Mapping::flush_mapping_table(){
+    
+}

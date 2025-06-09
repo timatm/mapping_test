@@ -1,15 +1,23 @@
 #include "IMS_interface.hh"
+#include <algorithm>
+#include <numeric>
 
 Tree tree;
 Mapping mappingManager(lbnPoolManager);
+LBNPool lbnPoolManager; 
+Persistence persistenceManager;
+Log logManager;
+super_page *sp_ptr_old;
+super_page *sp_ptr_new;
+
 
 int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
     int err = OPERATION_FAILURE;
-
     std::string filename = request.filename;
     int level = request.levelInfo;
     int rangeMin = request.rangeMin;
     int rangeMax = request.rangeMax;
+    pr_info("Write request for file: %s, level: %d, range: [%d, %d]", filename.c_str(), level, rangeMin, rangeMax);
     // Check if the file already exists in the mapping table
     if (mappingManager.mappingTable.count(filename)) {
         pr_info("ERROR: Mapping already exists, refusing to overwrite file: %s", filename.c_str());
@@ -47,7 +55,7 @@ int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
         pr_info("Failed to write block to LBN %lu for file: %s", lbn, filename.c_str());
         return OPERATION_FAILURE;
     }
-
+    request.lbn = lbn;
     return OPERATION_SUCCESS;
 }
 
@@ -95,24 +103,120 @@ int IMS_interface::allocate_block(hostInfo request){
     return OPERATION_SUCCESS;
 }
 
+int IMS_interface::init_IMS(){
+    int err = OPERATION_FAILURE;
+    pr_info("Initialize IMS interface");
+    persistenceManager.disk.open("disk.bin");
+    uint8_t *buffer = (uint8_t *)malloc(PAGE_SIZE);
+    persistenceManager.disk.read(0, buffer);
+    super_page *sp = (super_page *)buffer;
+    if(sp->magic != MAGIC){
+        pr_info("Magic number mismatch, initializing super page failed");
+        return OPERATION_FAILURE;
+    }
+    pr_info("Super page magic number is correct, initializing IMS interface");
+    tree = Tree();  // Reset the entire tree
+    sp_ptr_old->magic = sp->magic;
+    sp_ptr_old->mapping_store = sp->mapping_store;
+    sp_ptr_old->mapping_page_num = sp->mapping_page_num;
+    sp_ptr_old->log_store = sp->log_store;
+    sp_ptr_old->log_page_num = sp->log_page_num;
+    sp_ptr_old->currentLogLBN = sp->currentLogLBN;
+    sp_ptr_old->nextLogLBN = sp->nextLogLBN;
+    sp_ptr_old->logOffset = sp->logOffset;
+    sp_ptr_old->usedLBN_num = sp->usedLBN_num;
+    lbnPoolManager.lastUsedChannel = sp->lastUsedChannel;
 
+
+    err = mappingManager.init_mapping_table(sp_ptr_old->mapping_store,sp_ptr_old->mapping_page_num);
+    if(err != OPERATION_SUCCESS){
+        pr_info("Initialize mapping table failed");
+        return OPERATION_FAILURE;
+    }
+    err = logManager.init_logRecordList(sp_ptr_old->log_store,sp_ptr_old->log_page_num);
+    if(err != OPERATION_SUCCESS){
+        pr_info("Initialize log record list failed");
+        return OPERATION_FAILURE;
+    }
+    err = lbnPoolManager.init_lbn_pool(sp_ptr_old->usedLBN_num);
+    if(err != OPERATION_SUCCESS){
+        pr_info("Initialize LBN pool failed");
+        return OPERATION_FAILURE;
+    }
+    // Avoid using specific LBN
+    lbnPoolManager.remove_freeLBNList(sp_ptr_old->mapping_store);
+    lbnPoolManager.remove_freeLBNList(sp_ptr_old->log_store);
+    lbnPoolManager.remove_freeLBNList(SUPER_BLOCK);
+
+    logManager.currentLogLBN = sp_ptr_old->currentLogLBN;
+    logManager.nextLogLBN = sp_ptr_old->nextLogLBN;
+    logManager.logOffset = sp_ptr_old->logOffset;
+    return OPERATION_SUCCESS;
+}
+int IMS_interface::close_IMS(){
+    int err = OPERATION_FAILURE;
+    pr_info("Close IMS interface");
+
+    err = persistenceManager.flushMappingTable(mappingManager.mappingTable);
+    if(err != OPERATION_SUCCESS){
+        pr_info("Flushing mapping table to disk failed");
+        return OPERATION_FAILURE;
+    }
+
+    err = logManager.flush_logRecordList();
+    if(err != OPERATION_SUCCESS){
+        pr_info("Flushing log record list to disk failed");
+        return OPERATION_FAILURE;
+    }
+    uint8_t *buffer = (uint8_t *)malloc(PAGE_SIZE);
+    if(!buffer){
+        pr_info("Allocating memory for super page buffer failed");
+        return OPERATION_FAILURE;
+    }
+    memset(buffer, 0, PAGE_SIZE);
+    super_page *sp = (super_page *)buffer;
+    sp->magic = MAGIC;
+    sp->mapping_store = sp_ptr_old->mapping_store;
+    sp->mapping_page_num = sp_ptr_new->mapping_page_num;
+    sp->log_store = sp_ptr_old->log_store;
+    sp->log_page_num = sp_ptr_new->log_page_num;
+    sp->currentLogLBN = logManager.currentLogLBN;
+    sp->nextLogLBN = logManager.nextLogLBN;
+    sp->logOffset = logManager.logOffset;
+    size_t total_used_lbn = std::accumulate(
+    lbnPoolManager.usedLBNList.begin(), lbnPoolManager.usedLBNList.end(), 0UL,
+    [](size_t sum, const std::deque<uint64_t>& dq) {
+        return sum + dq.size();
+    });
+    sp->usedLBN_num = total_used_lbn;
+    err = persistenceManager.disk.write(0, buffer);
+    if(err != OPERATION_SUCCESS){
+        pr_info("Writing super page to disk failed");
+        free(buffer);
+        return OPERATION_FAILURE;
+    }
+    
+    free(buffer);
+    persistenceManager.disk.close();
+    return OPERATION_SUCCESS;
+}
 // TODO now not complete still need to modify
-int IMS_interface::write_log(valueLogInfo request,uint8_t *buffer){
-    int err = OPERATION_FAILURE;
-    uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
-    err = disk.write(lpn,buffer);
-    if( err != OPERATION_SUCCESS){
-        pr_info("Write value log is fail");
-    }
-    return err;
-}
+// int IMS_interface::write_log(valueLogInfo request,uint8_t *buffer){
+//     int err = OPERATION_FAILURE;
+//     uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
+//     err = disk.write(lpn,buffer);
+//     if( err != OPERATION_SUCCESS){
+//         pr_info("Write value log is fail");
+//     }
+//     return err;
+// }
 
-int IMS_interface::read_log(valueLogInfo request,uint8_t *buffer){
-    int err = OPERATION_FAILURE;
-    uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
-    err = disk.read(lpn,buffer);
-    if( err != OPERATION_SUCCESS){
-        pr_info("Write value log is fail");
-    }
-    return err;
-}
+// int IMS_interface::read_log(valueLogInfo request,uint8_t *buffer){
+//     int err = OPERATION_FAILURE;
+//     uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
+//     err = disk.read(lpn,buffer);
+//     if( err != OPERATION_SUCCESS){
+//         pr_info("Write value log is fail");
+//     }
+//     return err;
+// }

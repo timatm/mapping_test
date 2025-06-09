@@ -219,10 +219,8 @@ std::vector<int> Tree::get_relate_ch_info(std::shared_ptr<TreeNode> node) {
     return relate_ch_info;
 }
 
-
-
-
-
- 
-
-
+int Tree::init_tree(){
+    for(auto [filename,lbn]:mappingManager.mappingTable){
+        
+    }
+}

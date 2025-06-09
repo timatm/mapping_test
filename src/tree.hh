@@ -11,6 +11,9 @@
 #include <queue>
 #include "print.hh"
 #include "def.hh"
+#include "lbn_pool.hh"
+#include "IMS_interface.hh"
+#include "mapping_table.hh"
 
 struct TreeNode : public std::enable_shared_from_this<TreeNode>{
     std::string filename;
@@ -60,6 +63,7 @@ struct TreeNodeComparator {
 class Tree {
 public: 
     std::unordered_map<int, std::set<std::shared_ptr<TreeNode>, TreeNodeComparator>> level_map;
+    int init_tree();
     void insert_node(std::shared_ptr<TreeNode> node);
     void remove_node(std::shared_ptr<TreeNode> node);
     std::queue<std::shared_ptr<TreeNode>> search_key(int key);
@@ -70,6 +74,7 @@ public:
     std::shared_ptr<TreeNode> find_node(std::string filename,int level,int ,int);
     std::shared_ptr<TreeNode> find_node(std::string filename);
     std::vector<int> get_relate_ch_info(std::shared_ptr<TreeNode> node);
+    // TODO release memory of the tree
 };
 
 

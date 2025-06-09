@@ -38,8 +38,12 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
     for (const auto& pair : mappingTable) {
         if (idx == MAPPING_TABLE_ENTRIES){
             page->entry_num = idx;
-            page->nextPage = 1; // TODO need to check
             err = disk.write(lpn, buffer);
+            if(err == OPERATION_FAILURE) {
+                free(buffer);
+                return OPERATION_FAILURE;
+            }
+            sp_ptr_new->mapping_page_num++;
             memset(buffer, 0xFF, PAGE_SIZE);
             lpn++;
             idx = 0;
@@ -48,10 +52,15 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
         strncpy(entry.fileName, pair.first.c_str(), sizeof(entry.fileName) - 1);
         entry.fileName[sizeof(entry.fileName) - 1] = '\0';
         entry.lbn = pair.second;
+        auto node = tree.find_node(pair.first.c_str());
+        entry.level = node->levelInfo;
+        entry.channel = node->channelInfo;
+        entry.minRange = node->rangeMin;
+        entry.maxRange = node->rangeMax;
     }
     if(idx > 0) {
+        sp_ptr_new->mapping_page_num++;
         page->entry_num = idx;
-        page->nextPage = 1;
         err = disk.write(lpn, buffer);
     }
     free(buffer);

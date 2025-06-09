@@ -14,6 +14,10 @@
 #include "tree.hh"
 #include "def.hh"
 #include "print.hh"
+#include "persistence.hh"
+#include "mapping_table.hh"
+#include "log.hh"
+#include "IMS_interface.hh"
 class LBNPool {
 public:
     std::array<std::deque<uint64_t>, CHANNEL_NUM> usedLBNList;
@@ -21,7 +25,7 @@ public:
     std::queue<uint64_t> valueLogList;
     int lastUsedChannel;
 
-    void init_lbn_pool();
+    int init_lbn_pool(int);
     void insert_freeLBNList(uint64_t lbn);
     bool remove_freeLBNList(uint64_t lbn);
     bool get_freeLBNList(uint64_t lbn);
@@ -46,7 +50,7 @@ public:
         WROSTCASE = 0,
         RR        = 1,
         LEVEL2CH  = 2,
-        MYPOLICY      = 3
+        MYPOLICY  = 3
     };
 };
 
