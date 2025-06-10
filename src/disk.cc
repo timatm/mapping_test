@@ -7,20 +7,29 @@
 void Disk::open(const std::string& filename) {
     file = std::fopen(filename.c_str(), "r+b");
     if (!file) {
-        // If file does not exist, create it
         file = std::fopen(filename.c_str(), "w+b");
         if (!file) {
             throw std::runtime_error("Failed to open or create file: " + filename);
         }
     }
 
-    // Calculate total blocks
+    uint64_t expectedSize = LBN_NUM * PAGE_SIZE;
+
     std::fseek(file, 0, SEEK_END);
-    uint64_t fileSize = std::ftell(file);
+    uint64_t actualSize = std::ftell(file);
+
+    if (actualSize < expectedSize) {
+        std::fseek(file, expectedSize - 1, SEEK_SET);  // 定位到最後一個 byte
+        std::fwrite("", 1, 1, file);                   // 寫入 1 byte，強制擴展
+        std::fflush(file);                             // 確保 flush 到磁碟
+        pr_info("Disk file expanded to %lu bytes", expectedSize);
+    }
+
+    std::rewind(file);
     pr_info("Total LBN num: %lu", LBN_NUM);
     pr_info("Open disk success");
-    std::rewind(file);
 }
+
 
 void Disk::close() {
     if (file) {

@@ -14,7 +14,6 @@ public:
     int write(uint64_t lpn, const uint8_t * buffer);
     int writeBlock(uint64_t lbn,uint8_t *buffer);
     int readBlock(uint64_t lbn,uint8_t *buffer);
-private:
     FILE* file = nullptr;
 };
 #endif // __DISK_H__

@@ -117,6 +117,17 @@ struct super_page{
         sizeof(usedLBN_num) +
         sizeof(lastUsedChannel);
     uint8_t reserved[PAGE_SIZE - header_size];
+    super_page(uint64_t m,uint64_t mapping_store,uint64_t log_store):
+        magic(m),
+        mapping_store(mapping_store),
+        mapping_page_num(0),
+        log_store(log_store),
+        log_page_num(0),
+        currentLogLBN(INVALIDLBN),
+        nextLogLBN(INVALIDLBN),
+        logOffset(INVALIDLBN),
+        usedLBN_num(INVALIDLBN),
+        lastUsedChannel(INVALIDCH){}
 };
 static_assert(sizeof(super_page) == PAGE_SIZE, "super_page must be same to page size");
 #pragma pack(pop)

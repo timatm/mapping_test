@@ -7,8 +7,31 @@
 #include <cstdint>
 #include <iostream>
 #include <algorithm>
-#include <numeric>  
+#include <numeric>
+
+#include "tree.hh"
+#include "def.hh"
+#include "print.hh"
+#include "persistence.hh"
+#include "mapping_table.hh"
+#include "log.hh"
+#include "IMS_interface.hh"
 // freeLBNList 操作
+void LBNPool::reset_lbn_pool(){
+    int used_LBN_num = 0;
+    for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
+        while (!freeLBNList[ch].empty()) {
+            freeLBNList[ch].pop_front();
+        }
+    }
+    for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
+        while (!usedLBNList[ch].empty()) {
+            usedLBNList[ch].pop_front();
+        }
+    }
+}
+
+
 int LBNPool::init_lbn_pool(int expect_used_LBN_num){
     int used_LBN_num = 0;
     for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
@@ -65,7 +88,7 @@ void LBNPool::insert_freeLBNList(uint64_t lbn) {
     uint64_t package = LBN2PACKAGE(lbn);
     uint64_t die = LBN2DIE(lbn);
     uint64_t plane = LBN2PLANE(lbn);
-    pr_info("insert free LBN:%8lu to [CH]: %lu [PACK]: %lu [DIE]: %lu [PLANE]: %lu", lbn, channel, package, die, plane);
+    // pr_info("insert free LBN:%8lu to [CH]: %lu [PACK]: %lu [DIE]: %lu [PLANE]: %lu", lbn, channel, package, die, plane);
     freeLBNList[channel].push_back(lbn);
 }
 

@@ -200,6 +200,10 @@ std::vector<int> Tree::get_relate_ch_info(std::shared_ptr<TreeNode> node) {
             relate_ch_info[child->channelInfo]++;
         }
         for (auto& [filename,c] : child->children) {
+            if (!c){
+                pr_debug("Filename: %s can't find pointer",filename);
+                continue;
+            };
             if(c->rangeMin <= node->rangeMax && c->rangeMax >= node->rangeMin) {
                 Cqueue.push(c);
             }
@@ -208,19 +212,19 @@ std::vector<int> Tree::get_relate_ch_info(std::shared_ptr<TreeNode> node) {
     
     auto& nodes = level_map[node->levelInfo];
     auto it = nodes.find(node);
+    if(it == nodes.end()){
+        pr_debug("Node not found in level_map");
+        return relate_ch_info;
+    }
     if(it != nodes.begin()){
         auto prev = std::prev(it);
         relate_ch_info[(*prev)->channelInfo]++;
     }
     if(it != nodes.end()){
         auto next = std::next(it);
-        relate_ch_info[(*next)->channelInfo]++;
+        if(next != nodes.end()){
+            relate_ch_info[(*next)->channelInfo]++;
+        }
     }
     return relate_ch_info;
-}
-
-int Tree::init_tree(){
-    for(auto [filename,lbn]:mappingManager.mappingTable){
-        
-    }
 }

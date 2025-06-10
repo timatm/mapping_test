@@ -5,11 +5,7 @@
 #include <cstdint>
 #include <deque>
 
-#include "def.hh"
-#include "lbn_pool.hh"
-#include "print.hh"
-#include "persistence.hh"
-#include "mapping_table.hh"
+
 class Log {
 public:
     Log() = default;

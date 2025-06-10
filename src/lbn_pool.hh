@@ -10,14 +10,9 @@
 #include <vector>
 #include <deque>
 #include <queue>
-
-#include "tree.hh"
+#include <memory>
 #include "def.hh"
-#include "print.hh"
-#include "persistence.hh"
-#include "mapping_table.hh"
-#include "log.hh"
-#include "IMS_interface.hh"
+
 class LBNPool {
 public:
     std::array<std::deque<uint64_t>, CHANNEL_NUM> usedLBNList;
@@ -25,6 +20,7 @@ public:
     std::queue<uint64_t> valueLogList;
     int lastUsedChannel;
 
+    void reset_lbn_pool();
     int init_lbn_pool(int);
     void insert_freeLBNList(uint64_t lbn);
     bool remove_freeLBNList(uint64_t lbn);
@@ -39,7 +35,6 @@ public:
     void remove_valueLogList(uint64_t lbn);
     uint64_t allocate_valueLog_block();
 
-    std::array<int,CHANNEL_NUM> calculate_channel_usage(std::queue<std::shared_ptr<TreeNode>>);
     uint64_t select_lbn(int type,hostInfo info);
     void print();
     uint64_t worst_policy();

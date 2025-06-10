@@ -2,13 +2,21 @@
 #include <algorithm>
 #include <numeric>
 
+#include "def.hh"
+#include "lbn_pool.hh"
+#include "persistence.hh"
+#include "tree.hh"
+#include "mapping_table.hh"
+#include "print.hh"
+#include "log.hh"
+
 Tree tree;
 Mapping mappingManager(lbnPoolManager);
 LBNPool lbnPoolManager; 
 Persistence persistenceManager;
 Log logManager;
-super_page *sp_ptr_old;
-super_page *sp_ptr_new;
+super_page *sp_ptr_old  = new super_page(MAGIC,1,2);
+super_page *sp_ptr_new = new super_page(MAGIC,1,2);
 
 
 int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
@@ -197,7 +205,10 @@ int IMS_interface::close_IMS(){
     }
     
     free(buffer);
+
     persistenceManager.disk.close();
+    delete sp_ptr_old;
+    delete sp_ptr_new;
     return OPERATION_SUCCESS;
 }
 // TODO now not complete still need to modify

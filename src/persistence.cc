@@ -1,8 +1,12 @@
 #include <cstdlib>
 #include <iostream>
 
+
+#include "IMS_interface.hh"
 #include "persistence.hh"
 #include "mapping_table.hh"
+#include "print.hh"
+#include "tree.hh"
 int Persistence::readMappingTable(uint64_t lbn,uint8_t *buffer,size_t size) {
     int err;
     if (buffer == nullptr) {
@@ -21,9 +25,11 @@ int Persistence::readMappingTable(uint64_t lbn,uint8_t *buffer,size_t size) {
 }
 
 int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& mappingTable) {
+
+    pr_info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     uint64_t lpn = 0;
     uint8_t *buffer = (uint8_t*)malloc(PAGE_SIZE);
-    int err;
+    int err = OPERATION_FAILURE;
     if(!ENABLE_DISK){
         return OPERATION_SUCCESS;
     }
@@ -34,6 +40,10 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
     memset(buffer, 0xFF, PAGE_SIZE);
 
     auto *page = reinterpret_cast<mappingTablePerPage*>(buffer);
+    if(!page){
+        pr_info("[ERROR] Memory allocation failed.\n");
+        return OPERATION_FAILURE;
+    }
     size_t idx = 0;
     for (const auto& pair : mappingTable) {
         if (idx == MAPPING_TABLE_ENTRIES){
@@ -53,10 +63,15 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
         entry.fileName[sizeof(entry.fileName) - 1] = '\0';
         entry.lbn = pair.second;
         auto node = tree.find_node(pair.first.c_str());
-        entry.level = node->levelInfo;
-        entry.channel = node->channelInfo;
-        entry.minRange = node->rangeMin;
-        entry.maxRange = node->rangeMax;
+        if (!node) {
+            pr_debug("Cannot find node for %s", pair.first.c_str());
+        }
+        else{
+            entry.level = node->levelInfo;
+            entry.channel = node->channelInfo;
+            entry.minRange = node->rangeMin;
+            entry.maxRange = node->rangeMax;
+        }
     }
     if(idx > 0) {
         sp_ptr_new->mapping_page_num++;
@@ -88,6 +103,10 @@ int Persistence::flushSStable(uint64_t lbn,uint8_t *buffer,size_t size){
     if(!ENABLE_DISK){
         return OPERATION_SUCCESS;
     }
+    if(!disk.file){
+        pr_debug("Disk does't open");
+        return OPERATION_FAILURE;
+    }
     if (buffer == nullptr) {
         std::cerr << "[ERROR] Memory allocation failed.\n";
         return OPERATION_FAILURE;
@@ -96,11 +115,11 @@ int Persistence::flushSStable(uint64_t lbn,uint8_t *buffer,size_t size){
         pr_debug("[ERROR] Memory allocation failed.");
         return OPERATION_FAILURE;
     }
-    disk.writeBlock(lbn, buffer);
-    if(err){
-        return OPERATION_FAILURE;
+    err = disk.writeBlock(lbn, buffer);
+    if(!err){
+        return err;
     }
-    return OPERATION_SUCCESS;
+    return err;
 }
 
 int Persistence::readSStablePage(uint64_t lpn,uint8_t *buffer,size_t size){

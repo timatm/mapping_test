@@ -2,7 +2,7 @@
 #include "../src/lbn_pool.hh"
 #include "../src/def.hh"
 #include "../src/IMS_interface.hh"
-
+#include "../src/tree.hh"
 #include <iostream>
 #include <iomanip>
 
@@ -65,7 +65,7 @@ insert A49 7 1 59 66
 
 TEST(LBN_policy,wrost){
     LBNPool pool;
-    pool.init_lbn_pool();
+    pool.reset_lbn_pool();
     for(uint64_t lbn;lbn < LBN_NUM;lbn++){
         pool.insert_freeLBNList(lbn);
     }
@@ -82,7 +82,7 @@ TEST(LBN_policy,wrost){
 
 TEST(LBN_policy, RR_policy) {
     LBNPool pool;
-    pool.init_lbn_pool();
+    pool.reset_lbn_pool();
     for(uint64_t lbn = 0;lbn < LBN_NUM;lbn++){
         pool.insert_freeLBNList(lbn);
     }
@@ -103,7 +103,7 @@ TEST(LBN_policy, levelpolicy) {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, CHANNEL_NUM-1);
     LBNPool pool;
-    pool.init_lbn_pool();
+    pool.reset_lbn_pool();
     for(uint64_t lbn = 0;lbn < LBN_NUM;lbn++){
         pool.insert_freeLBNList(lbn);
     }
@@ -147,7 +147,7 @@ void execute_tree_test(Tree& tree, std::string& commands) {
 TEST(LBN_policy, my_policy) {
     Tree tree;
     LBNPool pool;
-    pool.init_lbn_pool();
+    pool.reset_lbn_pool();
     for(uint64_t lbn = 0;lbn < LBN_NUM;lbn++){
         pool.insert_freeLBNList(lbn);
     }

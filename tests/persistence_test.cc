@@ -36,11 +36,11 @@ TEST_F(PersistenceTest, ReadWriteSStableBlock) {
     uint8_t read_buf[BLOCK_SIZE];
     fill_buffer(write_buf, 0xA5, BLOCK_SIZE);
 
-    ASSERT_EQ(persistence.flushSStable(2, write_buf, BLOCK_SIZE), OPERATION_SUCCESS);
+    EXPECT_EQ(persistence.flushSStable(2, write_buf, BLOCK_SIZE), OPERATION_SUCCESS);
     
-    ASSERT_EQ(persistence.readSStable(2, read_buf, BLOCK_SIZE), OPERATION_SUCCESS);
+    EXPECT_EQ(persistence.readSStable(2, read_buf, BLOCK_SIZE), OPERATION_SUCCESS);
     
-    ASSERT_EQ(memcmp(write_buf, read_buf, BLOCK_SIZE), 0);
+    EXPECT_EQ(memcmp(write_buf, read_buf, BLOCK_SIZE), 0);
 }
 
 // 測試單頁讀取 readSStablePage

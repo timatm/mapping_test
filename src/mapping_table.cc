@@ -2,6 +2,9 @@
 #include <iomanip>
 #include <algorithm>
 
+#include "persistence.hh"
+#include "tree.hh"
+#include "lbn_pool.hh"
 int Mapping::init_mapping_table(uint64_t mappingPageLBN,uint64_t page_num){
 
     if(mappingPageLBN == INVALIDLBN) {

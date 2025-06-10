@@ -1,6 +1,12 @@
 #include "log.hh"
 
 
+#include "def.hh"
+#include "lbn_pool.hh"
+#include "print.hh"
+#include "persistence.hh"
+#include "mapping_table.hh"
+#include "IMS_interface.hh"
 int Log::init_logRecordList(uint64_t logStoreLBN,uint64_t page_num){
     int err = OPERATION_FAILURE;
     if(logStoreLBN == INVALIDLBN) {

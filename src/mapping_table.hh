@@ -9,10 +9,8 @@
 #include <vector>
 #include <iostream>
 #include "def.hh"
-#include "lbn_pool.hh"
-#include "persistence.hh"
-#include "tree.hh"
 
+class LBNPool;   
 class Mapping{
     LBNPool& lbnPoolManager;
 public:
