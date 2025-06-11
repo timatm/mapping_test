@@ -50,11 +50,10 @@ int IMS_interface::write_sstable(hostInfo request,uint8_t *buffer){
     }
     pr_info("Allocated LBN %lu for file: %s", lbn, filename.c_str());
     err = persistenceManager.flushSStable(lbn, (uint8_t *)buffer, BLOCK_SIZE);
-    pr_info("Wrote data to LBN %lu for file: %s", lbn, filename.c_str());
 
     // The SStable flush to SSD is success,record the SStable store in which channel and update mappingtable
     if(err == OPERATION_SUCCESS){
-        pr_info("Write block to LBN %lu for file: %s successfully", lbn, filename.c_str());
+        pr_info("Write block to LBN %lu in CH[%d] for file: %s successfully", lbn, LBN2CH(lbn),filename.c_str());
         node->channelInfo = LBN2CH(lbn);
         mappingManager.insert_mapping(filename, lbn);
     } 
@@ -119,32 +118,40 @@ int IMS_interface::init_IMS(){
     persistenceManager.disk.read(0, buffer);
     super_page *sp = (super_page *)buffer;
     if(sp->magic != MAGIC){
-        pr_info("Magic number mismatch, initializing super page failed");
-        return OPERATION_FAILURE;
+        pr_info("Magic number mismatch,this disk maybe is new or not IMS disk");
+        pr_info("try to initialize IMS interface with new super page");
+        sp_ptr_old->magic = MAGIC;
+        sp_ptr_old->mapping_page_num = 0;
+        sp_ptr_old->log_page_num = 0;
+        sp_ptr_old->currentLogLBN = INVALIDLBN;
+        sp_ptr_old->nextLogLBN = INVALIDLBN;
+        sp_ptr_old->logOffset = 0;
+        sp_ptr_old->usedLBN_num = 0;
+        lbnPoolManager.lastUsedChannel = INVALIDCH;
     }
-    pr_info("Super page magic number is correct, initializing IMS interface");
-    tree = Tree();  // Reset the entire tree
-    sp_ptr_old->magic = sp->magic;
-    sp_ptr_old->mapping_store = sp->mapping_store;
-    sp_ptr_old->mapping_page_num = sp->mapping_page_num;
-    sp_ptr_old->log_store = sp->log_store;
-    sp_ptr_old->log_page_num = sp->log_page_num;
-    sp_ptr_old->currentLogLBN = sp->currentLogLBN;
-    sp_ptr_old->nextLogLBN = sp->nextLogLBN;
-    sp_ptr_old->logOffset = sp->logOffset;
-    sp_ptr_old->usedLBN_num = sp->usedLBN_num;
-    lbnPoolManager.lastUsedChannel = sp->lastUsedChannel;
-
-
-    err = mappingManager.init_mapping_table(sp_ptr_old->mapping_store,sp_ptr_old->mapping_page_num);
-    if(err != OPERATION_SUCCESS){
-        pr_info("Initialize mapping table failed");
-        return OPERATION_FAILURE;
-    }
-    err = logManager.init_logRecordList(sp_ptr_old->log_store,sp_ptr_old->log_page_num);
-    if(err != OPERATION_SUCCESS){
-        pr_info("Initialize log record list failed");
-        return OPERATION_FAILURE;
+    else{
+        pr_info("Super page magic number is correct, initializing IMS interface");
+        tree = Tree();  // Reset the entire tree
+        sp_ptr_old->magic = sp->magic;
+        // sp_ptr_old->mapping_store = sp->mapping_store;
+        sp_ptr_old->mapping_page_num = sp->mapping_page_num;
+        // sp_ptr_old->log_store = sp->log_store;
+        sp_ptr_old->log_page_num = sp->log_page_num;
+        sp_ptr_old->currentLogLBN = sp->currentLogLBN;
+        sp_ptr_old->nextLogLBN = sp->nextLogLBN;
+        sp_ptr_old->logOffset = sp->logOffset;
+        sp_ptr_old->usedLBN_num = sp->usedLBN_num;
+        lbnPoolManager.lastUsedChannel = sp->lastUsedChannel;
+        err = mappingManager.init_mapping_table(sp_ptr_old->mapping_store,sp_ptr_old->mapping_page_num);
+        if(err != OPERATION_SUCCESS){
+            pr_info("Initialize mapping table failed");
+            return OPERATION_FAILURE;
+        }
+        err = logManager.init_logRecordList(sp_ptr_old->log_store,sp_ptr_old->log_page_num);
+        if(err != OPERATION_SUCCESS){
+            pr_info("Initialize log record list failed");
+            return OPERATION_FAILURE;
+        }
     }
     err = lbnPoolManager.init_lbn_pool(sp_ptr_old->usedLBN_num);
     if(err != OPERATION_SUCCESS){
@@ -227,7 +234,7 @@ int IMS_interface::close_IMS(){
 //     uint64_t lpn = LBN2LPN(request.lbn) + request.page_offset;
 //     err = disk.read(lpn,buffer);
 //     if( err != OPERATION_SUCCESS){
-//         pr_info("Write value log is fail");
+//         pr_info("Read value log is fail");
 //     }
 //     return err;
 // }

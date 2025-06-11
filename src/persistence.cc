@@ -26,8 +26,9 @@ int Persistence::readMappingTable(uint64_t lbn,uint8_t *buffer,size_t size) {
 
 int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& mappingTable) {
 
-    pr_info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    uint64_t lpn = 0;
+    uint64_t mappingPageLBN = sp_ptr_old->mapping_store;
+    pr_info("Flush mapping table to disk at LBN: %lu", mappingPageLBN);
+    uint64_t lpn = LBN2LPN(mappingPageLBN);
     uint8_t *buffer = (uint8_t*)malloc(PAGE_SIZE);
     int err = OPERATION_FAILURE;
     if(!ENABLE_DISK){
@@ -53,6 +54,7 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
                 free(buffer);
                 return OPERATION_FAILURE;
             }
+            pr_info("Flushed mapping table to disk at LPN: %lu", lpn);
             sp_ptr_new->mapping_page_num++;
             memset(buffer, 0xFF, PAGE_SIZE);
             lpn++;
@@ -77,7 +79,13 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
         sp_ptr_new->mapping_page_num++;
         page->entry_num = idx;
         err = disk.write(lpn, buffer);
+        if(err == OPERATION_FAILURE) {
+            free(buffer);
+            return OPERATION_FAILURE;
+        }
+        pr_info("Flushed mapping table to disk at LPN: %lu", lpn);
     }
+    pr_info("Mapping store pages num: %lu", sp_ptr_new->mapping_page_num);
     free(buffer);
     return OPERATION_SUCCESS;
 }
