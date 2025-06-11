@@ -34,16 +34,6 @@ void LBNPool::reset_lbn_pool(){
 
 int LBNPool::init_lbn_pool(int expect_used_LBN_num){
     int used_LBN_num = 0;
-    for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
-        while (!freeLBNList[ch].empty()) {
-            freeLBNList[ch].pop_front();
-        }
-    }
-    for (int ch = 0; ch < CHANNEL_NUM; ++ch) {
-        while (!usedLBNList[ch].empty()) {
-            usedLBNList[ch].pop_front();
-        }
-    }
     for(auto [filename ,lbn] :mappingManager.mappingTable){
         int channel = LBN2CH(lbn);
         if (channel >= CHANNEL_NUM) {
@@ -80,16 +70,23 @@ int LBNPool::init_lbn_pool(int expect_used_LBN_num){
         pr_info("LBN pool initialized successfully with %d used LBNs", expect_used_LBN_num);
         return OPERATION_SUCCESS;
     }
+    pr_info("LBN pool initialized failed,used number:%d ,expect:%d", used_LBN_num,expect_used_LBN_num);
     return OPERATION_FAILURE;
 }
 
 void LBNPool::insert_freeLBNList(uint64_t lbn) {
-    uint64_t channel = LBN2CH(lbn);
+    uint64_t ch = LBN2CH(lbn);
     uint64_t package = LBN2PACKAGE(lbn);
     uint64_t die = LBN2DIE(lbn);
     uint64_t plane = LBN2PLANE(lbn);
     // pr_info("insert free LBN:%8lu to [CH]: %lu [PACK]: %lu [DIE]: %lu [PLANE]: %lu", lbn, channel, package, die, plane);
-    freeLBNList[channel].push_back(lbn);
+    auto it = std::find(freeLBNList[ch].begin(),freeLBNList[ch].end(),lbn);
+    if(it != freeLBNList[ch].end()){
+        pr_debug("This LBN:%lld hae been in freeLBNList",lbn);
+        return;
+    }
+    freeLBNList[ch].push_back(lbn);
+    return;
 }
 
 bool LBNPool::remove_freeLBNList(uint64_t lbn) {
@@ -114,6 +111,12 @@ bool LBNPool::get_freeLBNList(uint64_t lbn) {
     return false;
 }
 
+uint64_t LBNPool::getFront_freeLBNList(int ch){
+    uint64_t lbn = freeLBNList[ch].front();
+    return lbn;
+}
+
+
 uint64_t LBNPool::pop_freeLBNList(int ch){
     uint64_t lbn = freeLBNList[ch].front();
     freeLBNList[ch].pop_front();
@@ -123,7 +126,13 @@ uint64_t LBNPool::pop_freeLBNList(int ch){
 // usedLBNList 操作
 void LBNPool::insert_usedLBNList(uint64_t lbn) {
     int ch = LBN2CH(lbn);
+    auto it = std::find(usedLBNList[ch].begin(),usedLBNList[ch].end(),lbn);
+    if(it != usedLBNList[ch].end()){
+        pr_debug("This LBN:%lld hae been in usedLBNList",lbn);
+        return;
+    }
     usedLBNList[ch].push_back(lbn);
+    pr_info("IMS insert LBN:%lld in CH[%d] to used list ",lbn,LBN2CH(lbn));
 }
 
 bool LBNPool::remove_usedLBNList(uint64_t lbn) {
@@ -149,12 +158,18 @@ bool LBNPool::get_usedLBNList(uint64_t lbn) {
 }
 
 void LBNPool::insert_valueLogList(uint64_t lbn){
-    valueLogList.push(lbn);
+    int ch = LBN2CH(lbn);
+    auto it = std::find(valueLogList.begin(),valueLogList.end(),lbn);
+    if(it != valueLogList.end()){
+        pr_debug("This LBN:%lld hae been in valueLogList",lbn);
+        return;
+    }
+    valueLogList.push_back(lbn);
 }
 
 
 void LBNPool::remove_valueLogList(uint64_t lbn){
-    valueLogList.pop();
+    valueLogList.pop_front();
 }
 
 
@@ -262,8 +277,7 @@ uint64_t LBNPool::my_policy(hostInfo info) {
 
     for(int ch:indices){
         if (!freeLBNList[ch].empty()) { 
-            lbn = pop_freeLBNList(ch);
-            insert_usedLBNList(lbn);
+            lbn = getFront_freeLBNList(ch);
             pr_info("My policy selected LBN: %lu from channel: %d", lbn, ch);
             return lbn;
         }
@@ -293,4 +307,10 @@ uint64_t LBNPool::select_lbn(int type,hostInfo info){
     }
     
     return lbn;
+}
+
+void LBNPool::clear(){
+    for (auto& q : usedLBNList) q.clear();
+    for (auto& q : freeLBNList) q.clear();
+    return;
 }

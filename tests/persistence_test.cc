@@ -7,6 +7,8 @@
 #include "../src/persistence.hh"
 #include "../src/mapping_table.hh"
 #include "../src/disk.hh"
+#include "../src/print.hh"
+#include "../src/IMS_interface.hh"
 constexpr const char* test_file = "test_disk.bin";
 
 class PersistenceTest : public ::testing::Test {
@@ -67,33 +69,30 @@ TEST_F(PersistenceTest, ReadWriteSStablePage) {
 
 // 測試 mappingTable 的 flush / read 功能
 TEST_F(PersistenceTest, ReadWriteMappingTable) {
+    sp_ptr_old->mapping_store = 0;          //   ★ 保證寫到 LPN 0
+
     std::unordered_map<std::string, uint64_t> mappingTable = {
         {"file1.sst", 10},
         {"file2.sst", 11},
         {"file3.sst", 12}
     };
-
     ASSERT_EQ(persistence.flushMappingTable(mappingTable), OPERATION_SUCCESS);
 
     uint8_t buffer[PAGE_SIZE];
     ASSERT_EQ(persistence.readMappingTable(0, buffer, PAGE_SIZE), OPERATION_SUCCESS);
 
-    mappingTablePerPage* mapping = (mappingTablePerPage*)buffer;
-    std::list<std::pair<std::string,uint64_t>> test;
-    for(int i = 0;i < mapping->entry_num;i++){
-        test.push_back( {mapping->entry[i].fileName,mapping->entry[i].lbn} );
-        std::cout << mapping->entry[i].fileName  << "   "<< mapping->entry[i].lbn << std::endl;
+    auto* mp = reinterpret_cast<mappingTablePerPage*>(buffer);
+    EXPECT_EQ(mp->entry_num, 3) << "entry_num 應該是 3";
+
+    bool f1=false,f2=false,f3=false;
+    for (int i=0;i<mp->entry_num;++i) {
+        std::string name = mp->entry[i].fileName;
+        uint64_t    lbn  = mp->entry[i].lbn;
+        if (name=="file1.sst" && lbn==10) f1 = true;
+        if (name=="file2.sst" && lbn==11) f2 = true;
+        if (name=="file3.sst" && lbn==12) f3 = true;
     }
-    std::pair<std::string,uint64_t> expect1("file1.sst", 10);
-    std::pair<std::string,uint64_t> expect2("file2.sst", 11);
-    std::pair<std::string,uint64_t> expect3("file3.sst", 12);   
-    
-    auto it = std::find(test.begin(),test.end(),expect1);
-    EXPECT_NE(it,test.end());
-
-    it = std::find(test.begin(),test.end(),expect2);
-    EXPECT_NE(it,test.end());
-
-    it = std::find(test.begin(),test.end(),expect3);
-    EXPECT_NE(it,test.end());
+    EXPECT_TRUE(f1);
+    EXPECT_TRUE(f2);
+    EXPECT_TRUE(f3);
 }

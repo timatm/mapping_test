@@ -118,3 +118,6 @@ int Log::flush_logRecordList() {
     return OPERATION_SUCCESS;
 }
 
+void Log::clear(){
+    logRecordList.clear();
+}

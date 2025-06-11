@@ -18,6 +18,7 @@ public:
     void insert_logRecord(uint64_t lbn);
     void remove_logRecord_head();
     int flush_logRecordList();
+    void clear();
 };
 
 extern Log logManager;

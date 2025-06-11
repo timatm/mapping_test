@@ -228,3 +228,16 @@ std::vector<int> Tree::get_relate_ch_info(std::shared_ptr<TreeNode> node) {
     }
     return relate_ch_info;
 }
+
+void Tree::clear() {
+    size_t total = 0;
+    for (const auto& [level, nodes] : level_map) {
+        total += nodes.size();
+    }
+    pr_info("Tree clear: releasing %zu nodes", total);
+
+    for (auto& [level, nodes] : level_map) {
+        nodes.clear();
+    }
+    level_map.clear();
+}

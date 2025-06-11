@@ -17,7 +17,7 @@ class LBNPool {
 public:
     std::array<std::deque<uint64_t>, CHANNEL_NUM> usedLBNList;
     std::array<std::deque<uint64_t>, CHANNEL_NUM> freeLBNList;
-    std::queue<uint64_t> valueLogList;
+    std::deque<uint64_t> valueLogList;
     int lastUsedChannel;
 
     void reset_lbn_pool();
@@ -26,7 +26,8 @@ public:
     bool remove_freeLBNList(uint64_t lbn);
     bool get_freeLBNList(uint64_t lbn);
     uint64_t pop_freeLBNList(int ch);
-
+    uint64_t getFront_freeLBNList(int ch);
+    
     void insert_usedLBNList(uint64_t lbn);
     bool remove_usedLBNList(uint64_t lbn);
     bool get_usedLBNList(uint64_t lbn);
@@ -41,6 +42,7 @@ public:
     uint64_t RRpolicy();
     uint64_t level2CH(hostInfo info);
     uint64_t my_policy(hostInfo info);
+    void clear();
     enum{
         WROSTCASE = 0,
         RR        = 1,

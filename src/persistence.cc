@@ -55,12 +55,14 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
                 return OPERATION_FAILURE;
             }
             pr_info("Flushed mapping table to disk at LPN: %lu", lpn);
+            pr_info("Mapping store entry num:%d", page->entry_num);
             sp_ptr_new->mapping_page_num++;
             memset(buffer, 0xFF, PAGE_SIZE);
             lpn++;
             idx = 0;
         }
         mappingEntry &entry = page->entry[idx++];
+        memset(entry.fileName, 0, sizeof(entry.fileName));
         strncpy(entry.fileName, pair.first.c_str(), sizeof(entry.fileName) - 1);
         entry.fileName[sizeof(entry.fileName) - 1] = '\0';
         entry.lbn = pair.second;
@@ -84,8 +86,10 @@ int Persistence::flushMappingTable(std::unordered_map<std::string, uint64_t>& ma
             return OPERATION_FAILURE;
         }
         pr_info("Flushed mapping table to disk at LPN: %lu", lpn);
+        pr_info("Mapping store entry num:%d", page->entry_num);
     }
     pr_info("Mapping store pages num: %lu", sp_ptr_new->mapping_page_num);
+    
     free(buffer);
     return OPERATION_SUCCESS;
 }

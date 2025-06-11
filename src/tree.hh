@@ -75,6 +75,7 @@ public:
     std::shared_ptr<TreeNode> find_node(std::string filename);
     std::vector<int> get_relate_ch_info(std::shared_ptr<TreeNode> node);
     // TODO release memory of the tree
+    void clear();
 };
 
 

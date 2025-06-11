@@ -28,6 +28,7 @@ public:
 
     int flush_mapping_table();
     
+    void clear();
 };
 extern Mapping mappingManager;
 #endif // __MAPPING_TABLE_HH__
